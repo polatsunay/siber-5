@@ -880,6 +880,7 @@ var OBJ_Z=[
  {id:'report',t:'Sahte hesabı şikâyet et',s:'Paylaş → ••• → Şikâyet et',h:['Sahte hesabın profilindeki ••• menüsünü aç ve “Şikâyet et”i seç.','Doğru nedenler: “Başka birini taklit ediyor” ve “Zorbalık veya taciz”.']},
  {id:'block',t:'Sahte hesabı engelle',s:'Önce kanıt topla, sonra engelle',h:['Engellersen gönderileri artık göremezsin; o yüzden önce kanıtları kaydet.','Paylaş → ••• → Engelle.']},
  {id:'adult',t:'Güvendiğin bir yetişkine haber ver',s:'Posta → Yeni e-posta, kanıtları ekle',h:['Okulun duyurusunda rehberlik servisinin adresi yazıyor. Sarı notta da var.','Posta → ✏️ Yeni e-posta → Selin Hanım (Rehber Öğretmen) → 📎 Kanıtları ekle → Gönder.']},
+ {id:'peer',t:'Akran baskısına direnme',s:'Telefon → Ayaz (biraz sonra yazacak)',h:['Ayaz sana mesaj atıp senden de yorum yazmanı isteyecek.','“Şaka değil, Elif çok üzgün” diyerek yorumunu silmesini iste.']},
  {id:'privacy',t:'Kendi hesabını koru',s:'Paylaş → ⚙️ Ayarlar: üç güvenlik ayarı',h:['Paylaş uygulamasında ⚙️ Ayarlar sekmesine geç.','Gizli hesap, etiket onayı ve “yorumları yalnızca arkadaşlarım yapabilsin” ayarlarını aç.']}
 ];
 var ZFAKE='elif.komik.anlar';
@@ -1071,9 +1072,9 @@ function zDM(){
 function zAyaz(){
  S.events.ayaz=1;
  zThread('ayaz','Ayaz','😎',['Abartıyorsunuz ya, alt tarafı şaka 😂 Sen de bir yorum yaz hadi'],[
-  {t:'Şaka değil, Elif çok üzgün. Lütfen yorumunu da sil.',ok:1,gt:'👏 Akran baskısına direndin',gm:'Ayaz yorumunu sildi.',re:'Haklısın… sildim. Elif\'ten özür dileyeceğim.'},
+  {t:'Şaka değil, Elif çok üzgün. Lütfen yorumunu da sil.',ok:1,task:'peer',re:'Haklısın… sildim. Elif\'ten özür dileyeceğim.'},
   {t:'Tamam, ben de bir şey yazarım 😂',ok:-1,bt:'😟 Akran baskısına uydun',why:'“Herkes yapıyor” zorbalığı haklı çıkarmaz.',re:'Hahah süpersin 😂'}
- ]);
+ ],true);
  save();toast('📱 Ayaz','Abartıyorsunuz ya, alt tarafı şaka 😂 Sen de bir yorum yaz hadi');refresh('phone');icons();
 }
 function zTick(l){
@@ -1085,7 +1086,7 @@ function zTick(l){
  if(e>25&&!S.events.threat){S.events.threat=1;save();toast('😈 @'+ZFAKE,'“Süre dolunca Elif\'in yeni fotoğrafı geliyor! Herkes hazır olsun 🤣”','bad')}
  if(!S.done&&!busy()){
   if(e>60&&!S.events.dm){S.events.dm=1;save();if(S.z.blocked){toast('🚫 Engelli hesap','@'+ZFAKE+' sana yazmaya çalıştı ama engellediğin için ulaşamadı.','good',true);complete('dm')}else zDM()}
-  else if(e>150&&!S.events.ayaz)zAyaz();
+  else if(e>90&&!S.events.ayaz)zAyaz();
  }
  if(!S.done&&!S.z.reported&&l>0&&l<=60)SFX.tick();
 }
@@ -1491,6 +1492,7 @@ GSC.haber={
   {id:'stop',t:'Haberin yayılmasını durdur',s:'Telefon → 8-B Sınıf',h:['Haberi paylaşma; önce kontrol etmeyi öner.','“Durun, önce kaynağına bakalım” yanıtını seç.']},
   {id:'source',t:'Resmî kaynağı kontrol et',s:'Gezgin → resmî duyurular',h:['Gezgin\'de “yarın okullar tatil mi” diye ara.','Bakanlığın resmî sitesindeki duyurulara bak (meb.gov.tr). Tatil kararlarını valilikler duyurur.']},
   {id:'correct',t:'Gruba doğrusunu yaz',s:'Telefon → 8-B Sınıf (kaynağı kontrol ettikten sonra)',h:['Ekran görüntüsündeki tarihe dikkat et!','Resmî kaynağı kontrol ettikten sonra gruba haberin eski olduğunu yaz.']},
+  {id:'crowd',t:'Kalabalığa uyma',s:'Telefon → Mert (biraz sonra yazacak)',h:['Mert “binlerce kişi paylaştı, kesin gerçek” diyecek.','Çok paylaşılmanın doğru olduğunu göstermediğini yaz.']},
   {id:'spam',t:'Sahte haber e-postasını spam olarak bildir',s:'Posta',h:['“ŞOK! Hemen paylaş” diyen e-postayı bul.','Okul müdürlüğünün e-postası gerçek; spam olan diğeri.']}
  ],
  threads:[
@@ -1501,7 +1503,7 @@ GSC.haber={
    {t:'Yaşasın!! Hemen diğer gruplara da atıyorum 🎉',ok:-1,bt:'🚨 Sahte haberi yaydın',why:'Haberi doğrulamadan paylaşmak onu daha çok kişiye ulaştırır.',re:'Mert: süpersin 😎'},
    {t:'🤣🤣',ok:0,bt:'⚠️ Doğrulamadan tepki verdin',why:'Önce haberin kaynağını ve tarihini kontrol etmelisin.',re:'Selin: 😂😂'}]},
   {k:'mert',later:1,name:'Mert',av:'🧢',msgs:['Zeynep neden bozuyorsun havayı 😒 Kesin gerçek bak, binlerce kişi paylaşmış!'],quick:[
-   {t:'Çok paylaşılması doğru olduğunu göstermez. Haberin tarihi ve kaynağı önemli.',ok:1,gt:'👏 Doğru!',gm:'Bir haberin çok paylaşılması doğru olduğu anlamına gelmez.',re:'Hmm… haklısın aslında 🤔'},
+   {t:'Çok paylaşılması doğru olduğunu göstermez. Haberin tarihi ve kaynağı önemli.',ok:1,task:'crowd',re:'Hmm… haklısın aslında 🤔'},
    {t:'Haklısın, binlerce kişi yanılmaz 😅',ok:0,bt:'⚠️ Kalabalığa uydun',why:'Bir haberin çok paylaşılması doğru olduğunu göstermez.',re:'Gördün mü 😎'}]}
  ],
  mails:[
@@ -1520,7 +1522,7 @@ GSC.haber={
   {url:'meb.gov.tr/duyurular',title:'Millî Eğitim Bakanlığı – Duyurular',d:'Bakanlığın resmî duyuruları.'},
   {url:'dogrula-net.org/kar-tatili',title:'Doğrulama: “Yarın tüm okullar tatil” iddiası',d:'Eski bir haberin ekran görüntüsü yeniden yayılıyor…'}
  ],
- events:[{at:90,type:'thread',k:'mert'}],
+ events:[{at:60,type:'thread',k:'mert'}],
  learn:['📅 Paylaşmadan önce haberin tarihine bak; eski haberler yeniden dolaşır.','🏛 Resmî kaynağı kontrol et: bakanlık, valilik, okul.','🔥 “ŞOK!”, “HEMEN PAYLAŞ” gibi ifadeler ve reklam dolu siteler şüphelidir.','👥 Çok paylaşılması doğru olduğunu göstermez.','✋ Doğrulamadan paylaşma; yanlışsa grubuna nazikçe doğrusunu yaz.']
 };
 
@@ -1597,6 +1599,7 @@ GSC.izin={
   {id:'perms',t:'Gereksiz izinleri verme',s:'Gezgin → magaza.app/merak-testi',h:['Bir test uygulamasının işi için hangi izinler gerçekten gerekli?','Rehber, konum, kamera ve mikrofonu reddet. Bildirim isteğe bağlı.']},
   {id:'data',t:'Gereksiz kişisel bilgi verme',s:'Teste başlarken istenen bilgiler',h:['Bir eğlence testinin gerçek adına ya da adresine ihtiyacı yok.','Sadece takma adı seç, diğerlerini boş bırak.']},
   {id:'share',t:'Sonucu güvenli paylaş',s:'Test sonucu sayfası',h:['Arkadaşlarını onaysız etiketleme, rehberine davet gönderme.','“Sadece sonucu, kişisel bilgi olmadan” seçeneği.']},
+  {id:'bday',t:'Doğum tarihini paylaşma',s:'Telefon → Ada (biraz sonra yazacak)',h:['Ada sonucunu doğum tarihinle paylaşmanı isteyecek.','Sonucu gösterebilirsin ama doğum tarihini ve etiketlemeyi paylaşma.']},
   {id:'spam',t:'Şifre isteyen e-postayı spam olarak bildir',s:'Posta',h:['Sonucunu görmek için şifre isteyen e-postayı bul.','E-postayı aç ve ⚠️ Spam bildir\'e bas.']},
   {id:'revoke',t:'Uygulamadaki verilerini sil',s:'merak-testi.app/hesap',h:['Uygulama sana bir hesap e-postası gönderecek.','merak-testi.app/hesap sayfasında “Hesabımı ve verilerimi sil”.']}
  ],
@@ -1605,7 +1608,7 @@ GSC.izin={
    {t:'Bakarım ama önce uygulamanın puanına, yorumlarına ve izinlerine bakacağım 🤓',ok:1,gt:'👏 Akıllıca!',gm:'Uygulama indirmeden önce izinlerine ve yorumlarına bakmak iyi bir alışkanlık.',go:'magaza.app/merak-testi',re:'Ada: Ne izni ya 😂 hadi yap!'},
    {t:'Hemen indiriyorum! 😍',ok:0,go:'magaza.app/merak-testi',bt:'⚠️ İncelemeden indirmeye gittin',why:'Önce uygulamanın izinlerine ve yorumlarına bakmalısın.',re:'Ada: 🥳'}]},
   {k:'ada',later:1,name:'Ada',av:'👑',msgs:['Defne testi bitirdin mi? Sonucunu paylaşırken beni de etiketle!! Bir de doğum tarihini yaz, burcunu da gösteriyor 😍'],quick:[
-   {t:'Sonucu gösteririm ama doğum tarihimi ve seni etiketlemeyi paylaşmam; kişisel bilgiler gizli kalmalı 🙂',ok:1,gt:'👏 Doğru!',gm:'Doğum tarihi gibi bilgiler şifre ve güvenlik sorularında kullanılabilir.',re:'Ada: Hmm haklısın, ben de sileyim 😅'},
+   {t:'Sonucu gösteririm ama doğum tarihimi ve seni etiketlemeyi paylaşmam; kişisel bilgiler gizli kalmalı 🙂',ok:1,task:'bday',re:'Ada: Hmm haklısın, ben de sileyim 😅'},
    {t:'Tamam! 03.05.2014 doğumluyum 😊',ok:0,bt:'⚠️ Kişisel bilgi paylaştın',why:'Doğum tarihi şifre ve güvenlik sorularında kullanılabilir; paylaşma.',re:'Ada: 🎉'}]}
  ],
  mails:[
@@ -1627,7 +1630,7 @@ GSC.izin={
   {url:'magaza.app/merak-testi',title:'Merak Testi: Hangi Karaktersin? – Uygulama Mağazası',d:'⭐ 2,1 · Geliştirici: FunQuizLab'},
   {url:'merak-testi.app/hesap',title:'Merak Testi – Hesabım',d:'Hesap ayarları ve veri silme.'}
  ],
- events:[{at:80,type:'thread',k:'ada'},{at:110,type:'mail',i:0}],
+ events:[{at:60,type:'thread',k:'ada'},{at:90,type:'mail',i:0}],
  learn:['🛍 İndirmeden önce uygulamanın puanına, yorumlarına ve izinlerine bak.','🔒 Uygulamaya sadece işi için gereken izinleri ver.','🙅 Eğlence testlerine ad soyad, okul, adres, telefon ya da doğum tarihi yazma.','👥 Arkadaşlarını onaysız etiketleme; rehberine toplu davet gönderme.','🗑 Kullanmadığın uygulamaların hesabını ve verilerini sil.']
 };
 
