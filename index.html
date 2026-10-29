@@ -251,6 +251,33 @@ input,textarea{font:inherit;color:inherit}
 .gi .gp{height:80px;display:grid;place-items:center;font-size:36px;background:#eef2f7}
 .gi b,.gi small{display:block;padding:4px 8px 0}.gi small{color:var(--muted);padding-bottom:8px}
 #hack.zz{color:#e8eef6;background:#0b1524}#hack.zz .big{color:#ffd166;text-shadow:none}
+/* ---------- Genel senaryolar ---------- */
+.gsite{max-width:620px;margin:0 auto;padding:18px 20px 30px}
+.gsite h2{margin:10px 0 8px;font-size:22px}
+.gsite p{line-height:1.6}
+.gimg{height:120px;border-radius:14px;display:grid;place-items:center;font-size:64px;margin-bottom:8px}
+.gform label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+.gbtns{display:grid;gap:8px;margin:10px 0}
+.gbtns .btn{text-align:left}
+.perm{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.pb{display:flex;gap:6px}
+.pb button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700}
+.pb button.on.a{background:#fde3e3;border-color:#e5a3a3;color:#a11}.pb button.on.d{background:#e7f6ec;border-color:#9ad8b2;color:#0e6b35}
+.gpick{display:flex;gap:8px;align-items:center;padding:8px 2px;border-bottom:1px solid var(--line);font-size:15px}
+.gad{display:inline-block;padding:8px 10px;border-radius:8px;background:#ffd23f;margin:4px 4px 0 0}.gad+.gad{background:#ff9fb6}
+.scgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:8px;margin:8px 0 4px}
+.scc{border:2px solid var(--line);background:#fff;border-radius:12px;padding:10px;text-align:left;display:flex;flex-direction:column;gap:2px}
+.scc .i{font-size:24px}.scc small{color:var(--muted);font-size:12px}
+.scc.on{border-color:var(--blue);background:#e8f1ff}
+.sbox2.wide{max-width:780px}
+.introw{display:grid;grid-template-columns:minmax(0,1.3fr) auto auto;gap:14px;align-items:end;margin-top:12px}
+@media (max-width:640px){.introw{grid-template-columns:1fr}}
+table.board{width:100%;border-collapse:collapse;font-size:14px;margin:8px 0}
+table.board th,table.board td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left}
+table.board tr.me td{background:#fff8e6;font-weight:700}
+.tl{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:13px}
+.tl div{padding:4px 0;border-bottom:1px dashed var(--line)}.tl span{display:inline-block;width:52px;color:var(--muted);font-variant-numeric:tabular-nums}
+.tl .bad{color:#9b1c1c}.tl .good{color:#0e6b35}
 /* ---------- Açılış / bitiş ekranı ---------- */
 .screen{position:fixed;inset:0;z-index:9800;display:grid;place-items:center;background:#07101cf2;padding:16px;overflow:auto}
 .sbox2{background:#fff;border-radius:18px;max-width:620px;width:100%;padding:26px;box-shadow:0 30px 80px #000}
@@ -309,8 +336,8 @@ var PEN_WRONG=30,PEN_HINT=60;
 
 /* =================== DURUM =================== */
 var S=null;
-function fresh(team,min,sc){
- return {sc:sc||'hack',team:team,min:min,start:Date.now(),endAt:Date.now()+min*60000,penalty:0,wrong:0,hintsUsed:0,hintN:{},done:false,
+function fresh(team,min,sc,diff){
+ return {sc:sc||'hack',diff:diff||'normal',log:[],mo:shuf(rng(MAILS.length+1)),zmo:shuf(rng(ZMAILS.length)),team:team,min:min,start:Date.now(),endAt:Date.now()+min*60000,penalty:0,wrong:0,hintsUsed:0,hintN:{},done:false,
   pw:'Pamuk1988',obj:{},
   mail:{open:0,read:{0:1},reported:{},extra:[],del:{},sent:[],folder:'in',compose:null,sentOpen:0},
   br:{url:'ara',hist:[],logged:false,tab:'genel',q:''},
@@ -326,7 +353,7 @@ function save(){try{localStorage.setItem('hacklenen-hesap',JSON.stringify(S))}ca
 function load(){try{return JSON.parse(localStorage.getItem('hacklenen-hesap')||'null')}catch(e){return null}}
 function elapsed(){return (Date.now()-S.start)/1000}
 function left(){var now=S.finishedAt||Date.now();return (S.endAt-now)/1000-S.penalty}
-function penalty(sec,title,text){S.penalty+=sec;S.wrong++;save();toast(title,text+' (−'+sec+' sn)','bad');tick()}
+function penalty(sec,title,text){sec=Math.round(sec*DF());logE('bad',title,text);S.penalty+=sec;S.wrong++;save();toast(title,text+' (−'+sec+' sn)','bad');tick()}
 
 /* =================== GÖREVLER =================== */
 var OBJ_H=[
@@ -339,17 +366,17 @@ var OBJ_H=[
  {id:'warn',t:'Velilere uyarı duyurusu gönder',s:'Portal → Duyuru gönder',h:['Doğru duyuru ne şifre içerir ne de bağlantı. Velilere neye güvenmemeleri gerektiğini söyler.','“Bizden gelen ödeme isteklerine itibar etmeyin” diyen duyuruyu seç.']},
  {id:'social',t:'Sosyal medya hesabını güvene al',s:'Paylaş uygulaması: hesabı gizle, tehlikeli 2 paylaşımı sil',h:['Paylaş uygulamasında “Gizli hesap” anahtarını aç.','Evin boş kalacağını ve kimlik bilgilerini gösteren paylaşımları ••• menüsünden sil.']}
 ];
-function objs(){return S&&S.sc==='zorba'?OBJ_Z:OBJ_H}
+function objs(){var g=GS();return g?g.tasks:(S&&S.sc==='zorba'?OBJ_Z:OBJ_H)}
 function done(id){return !!S.obj[id]}
 var TAUNT={pw:'Şifreyi değiştirdin… ama ben hâlâ içerideyim 😏',session:'HEY! Beni hesaptan mı attın?! 😡',twofa:'Kod olmadan giremiyorum… Bu haksızlık! 😤',sched:'Mesajımı iptal ettin ha? Başka yollar da var… 😈',social:'Profilini kapattın, artık hiçbir şey göremiyorum 🙄'};
-function complete(id){if(S.obj[id])return;S.obj[id]=Math.round(elapsed());save();var o=objs().filter(function(x){return x.id===id})[0];toast('✅ Görev tamamlandı',o.t,'good');refresh('tasks');checkWin();
+function complete(id){if(S.obj[id])return;S.obj[id]=Math.round(elapsed());save();var o=objs().filter(function(x){return x.id===id})[0];if(!o)return;logE('task',o.t);toast('✅ Görev tamamlandı',o.t,'good');refresh('tasks');checkWin();
  if(TAUNT[id]&&!S.taunted)S.taunted={};if(TAUNT[id]&&!S.taunted[id]){S.taunted[id]=1;save();setTimeout(function(){if(!S.done)sms('anon','Bilinmeyen',TAUNT[id])},2500)}}
 function checkWin(){if(objs().every(function(o){return done(o.id)})){S.done=true;S.finishedAt=Date.now();save();setTimeout(showEnd,900)}}
 
 /* =================== VERİ =================== */
 var MAILS=[
  {from:'Okul Müdürlüğü',addr:'mudurluk@yildizkoleji.k12.tr',col:'#123a6b',subj:'Veli toplantısı tarihi',time:'Dün 15:02',body:'<p>Değerli öğretmenlerimiz,</p><p>Dönem sonu veli toplantımız <b>14 Kasım Cuma</b> günü saat 17.00\'de konferans salonunda yapılacaktır. Sınıf listelerinizi toplantıdan önce müdür yardımcısına iletiniz.</p><p>Saygılarımızla,<br>Okul Müdürlüğü<br><span style="color:var(--muted);font-size:13px">Yıldız Koleji · Öğretmen portalı: portal.yildizkoleji.k12.tr · Tel: 0212 555 01 01</span></p>'},
- {from:'Yıldız Koleji BT Birimi',addr:'destek@yi1dizkoleji.k12.tr',col:'#d93636',subj:'ACİL: Şifrenizin süresi doldu!',time:'Dün 21:47',trap:1,body:'<p>Sayın öğretmenimiz,</p><p>Okul hesabınızın şifresinin süresi <b>bugün</b> doluyor. Hesabınızın kapatılmaması için <b>2 saat içinde</b> aşağıdaki bağlantıdan giriş yapınız.</p><p><span class="mbutton" data-go="yildizkoleji-portal.com/giris" data-href="http://yildizkoleji-portal.com/giris">Hesabımı doğrula</span></p><p>Bağlantı çalışmıyorsa: <span class="mlink" data-go="yildizkoleji-portal.com/giris" data-href="http://yildizkoleji-portal.com/giris">portal.yildizkoleji.k12.tr/dogrula</span></p><p>BT Destek Ekibi</p>'},
+ {from:'Yıldız Koleji BT Birimi',addr:{kolay:'destek@yildizkoleji-sifre-yenile.com',normal:'destek@yi1dizkoleji.k12.tr',zor:'destek@yıldizkoleji.k12.tr'},col:'#d93636',subj:'ACİL: Şifrenizin süresi doldu!',time:'Dün 21:47',trap:1,body:'<p>Sayın öğretmenimiz,</p><p>Okul hesabınızın şifresinin süresi <b>bugün</b> doluyor. Hesabınızın kapatılmaması için <b>2 saat içinde</b> aşağıdaki bağlantıdan giriş yapınız.</p><p><span class="mbutton" data-go="yildizkoleji-portal.com/giris" data-href="http://yildizkoleji-portal.com/giris">Hesabımı doğrula</span></p><p>Bağlantı çalışmıyorsa: <span class="mlink" data-go="yildizkoleji-portal.com/giris" data-href="http://yildizkoleji-portal.com/giris">portal.yildizkoleji.k12.tr/dogrula</span></p><p>BT Destek Ekibi</p>'},
  {from:'Ayşe Demir',addr:'ayse.demir@eposta.com',col:'#7b4bc4',subj:'Ödev hakkında',time:'Dün 19:12',body:'<p>Merhaba hocam,</p><p>Kızım Elif bu haftaki ödevi tam anlayamamış. Teslim tarihi cuma mı, pazartesi mi? Teşekkür ederim.</p><p>Ayşe Demir (Elif\'in annesi)</p>'},
  {from:'Kargo Takip',addr:'bilgi@hizlikargo.com.tr',col:'#c77700',subj:'Paketiniz dağıtıma çıktı',time:'Dün 16:40',body:'<p>Sayın alıcı,</p><p>Siparişiniz dağıtıma çıkmıştır. Teslimat bilgisi için takip numaranızı firmanın uygulamasında kullanabilirsiniz: <b>TR8842019</b></p><p>İyi günler dileriz.</p>'},
  {from:'Kitap Kulübü',addr:'bulten@kitapkulubu.com.tr',col:'#14924a',subj:'Kasım ayı kitap önerileri',time:'Dün 10:05',body:'<p>Merhaba,</p><p>Bu ayın önerileri: <b>Küçük Prens</b>, <b>Şeker Portakalı</b> ve <b>Momo</b>. Keyifli okumalar!</p>'}
@@ -362,7 +389,7 @@ var EXTRAS={
  bounce:{from:'Posta Sistemi',addr:'postmaster@yildizkoleji.k12.tr',col:'#5d6c7c',subj:'Teslim edilemedi: yanıtınız',time:'Şimdi',body:'<p>Gönderdiğiniz yanıt teslim edilemedi.</p><p><b>bildirim@yildizkoleji.k12.tr</b> otomatik bildirim adresidir ve yanıt kabul etmez.</p><p style="color:var(--muted)">Bu tür uyarılarda yanıt yazmak yerine portala adresi kendiniz yazarak girin.</p>'},
  scam2:{from:'Yıldız Koleji BT Birimi',addr:'destek@yi1dizkoleji.k12.tr',col:'#d93636',subj:'Ynt: ACİL: Şifrenizin süresi doldu!',time:'Şimdi',trap:1,body:'<p>Yanıtınız için teşekkürler. İşleminizi hızlandırmak için lütfen <b>mevcut şifrenizi</b> bu e-postaya yanıt olarak yazınız. 30 dakika içinde yanıt vermezseniz hesabınız silinecektir.</p><p>BT Destek Ekibi</p>'}
 };
-function allMails(){return MAILS.concat([PORTAL_MAIL]).concat(S.mail.extra.map(function(k){return EXTRAS[k]}))}
+function allMails(){var B=MAILS.concat([PORTAL_MAIL]);if(S.mo)B=S.mo.map(function(i){return B[i]});return B.concat(S.mail.extra.map(function(k){return EXTRAS[k]}))}
 function addMail(k,delay,note){if(S.mail.extra.indexOf(k)>=0||S.mail.pending&&S.mail.pending[k])return;S.mail.pending=S.mail.pending||{};S.mail.pending[k]=1;save();setTimeout(function(){delete S.mail.pending[k];S.mail.extra.push(k);save();refresh('mail');icons();toast('📧 Yeni e-posta',note||EXTRAS[k].from+': '+EXTRAS[k].subj)},delay)}
 
 var POSTS=[
@@ -437,9 +464,9 @@ function bar(){
 }
 function refresh(id){var el=wins[id];if(!el)return;var body=el.querySelector('.wbody');var sc=body.scrollTop;RENDER[id](body);if(id!=='phone')body.scrollTop=sc}
 function icons(){
- var unread=S&&S.sc==='zorba'?zUnread():S?allMails().filter(function(m,i){return !S.mail.read[i]&&!S.mail.del[i]}).length:0;
+ var g0=GS();var unread=g0&&S.g?gUnread():S&&S.sc==='zorba'?zUnread():S?allMails().filter(function(m,i){return !S.mail.read[i]&&!S.mail.del[i]}).length:0;
  var pun=S?S.phone.order.filter(function(k){return S.phone.threads[k].unread}).length:0;
- var list=S&&S.sc==='zorba'?[['phone',pun],['social',0],['mail',unread],['gallery',0],['tasks',0],['note',0]]:[['mail',unread],['browser',0],['social',0],['phone',pun],['tasks',0],['note',0]];
+ var list=g0?g0.apps.map(function(a){return [a,a==='mail'?unread:a==='phone'?pun:0]}):S&&S.sc==='zorba'?[['phone',pun],['social',0],['mail',unread],['gallery',0],['tasks',0],['note',0]]:[['mail',unread],['browser',0],['social',0],['phone',pun],['tasks',0],['note',0]];
  $('icons').innerHTML=list.map(function(x){var a=APPS[x[0]];return '<button class="dicon" data-id="'+x[0]+'"><span class="ic">'+a.ic+'</span><span>'+a.t+'</span>'+(x[1]?'<i class="badge">'+x[1]+'</i>':'')+'</button>'}).join('');
  qa('.dicon').forEach(function(b){b.onclick=function(){openWin(b.dataset.id)}});
 }
@@ -462,7 +489,7 @@ var SFX={
 function say(t){try{if(muted()||!window.speechSynthesis)return;var v=speechSynthesis.getVoices().filter(function(x){return /^tr/i.test(x.lang)})[0];if(!v)return;var u=new SpeechSynthesisUtterance(t);u.lang='tr-TR';u.voice=v;u.rate=1.05;speechSynthesis.speak(u)}catch(e){}}
 function hush(){try{if(window.speechSynthesis)speechSynthesis.cancel()}catch(e){}}
 $('muteBtn').onclick=function(){if(!S)return;S.mute=!S.mute;save();this.textContent=S.mute?'🔇':'🔊';if(S.mute)hush();else SFX.ding()};
-function bonus(sec,title,text){S.penalty-=sec;S.bonus=(S.bonus||0)+sec;save();toast(title,text+' (+'+sec+' sn)','good');tick()}
+function bonus(sec,title,text){logE('good',title,text);S.penalty-=sec;S.bonus=(S.bonus||0)+sec;save();toast(title,text+' (+'+sec+' sn)','good');tick()}
 function busy(){return !!($('call')||$('virus')||$('hack')||!$('screen').classList.contains('hidden'))}
 function compromise(){
  S.twofa.on=false;S.twofa.pending=false;S.twofa.code=null;delete S.obj.twofa;
@@ -483,7 +510,7 @@ function toast(title,text,kind,silent){
 var RENDER={};
 
 /* =================== POSTA =================== */
-RENDER.mail=function(b){if(S.sc==='zorba')return mailZ(b);
+RENDER.mail=function(b){if(GS())return mailG(b);if(S.sc==='zorba')return mailZ(b);
  var M=S.mail;if(!M.del)M.del={};if(!M.sent)M.sent=[];if(!M.folder)M.folder='in';
  var list=allMails(),inbox=[],trash=[];
  list.forEach(function(x,k){(M.del[k]?trash:inbox).push(k)});
@@ -505,9 +532,9 @@ RENDER.mail=function(b){if(S.sc==='zorba')return mailZ(b);
   var i=M.open,m=list[i],inTrash=!!M.del[i];M.read[i]=1;
   h+='<div class="mtools">'+(inTrash?'<button class="btn sm gray" id="mrest">↩ Gelen kutusuna taşı</button>':'<button class="btn sm gray" id="mrep">↩ Yanıtla</button><button class="btn sm gray" id="mdel">🗑 Sil</button>')+'<button class="btn sm red" id="rep"'+(M.reported[i]?' disabled':'')+'>🚩 Oltalama bildir</button></div>';
   if(M.compose&&M.compose.k===i&&!inTrash){
-   h+='<div class="mcontent"><h2 style="font-size:17px">Yanıt yaz</h2><div class="cmp"><div><span>Kime:</span> '+esc(m.from)+' <code>&lt;'+esc(m.addr)+'&gt;</code></div><div><span>Konu:</span> Ynt: '+esc(m.subj.replace(/^Ynt: /,''))+'</div><textarea class="inp" id="mbody" rows="7" placeholder="Mesajını yaz…">'+esc(M.compose.body||'')+'</textarea><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" id="msend">➤ Gönder</button><button class="btn gray" id="mcancel">Vazgeç</button></div></div><div class="mquote"><b>'+esc(m.from)+'</b> yazdı:<br>'+m.body+'</div></div>';
+   h+='<div class="mcontent"><h2 style="font-size:17px">Yanıt yaz</h2><div class="cmp"><div><span>Kime:</span> '+esc(m.from)+' <code>&lt;'+esc(A(m.addr))+'&gt;</code></div><div><span>Konu:</span> Ynt: '+esc(m.subj.replace(/^Ynt: /,''))+'</div><textarea class="inp" id="mbody" rows="7" placeholder="Mesajını yaz…">'+esc(M.compose.body||'')+'</textarea><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" id="msend">➤ Gönder</button><button class="btn gray" id="mcancel">Vazgeç</button></div></div><div class="mquote"><b>'+esc(m.from)+'</b> yazdı:<br>'+m.body+'</div></div>';
   }else{
-   h+='<div class="mcontent">'+(inTrash?'<div class="note info">Bu e-posta çöp kutusunda.</div>':'')+(M.reported[i]?'<div class="note good">Bu e-posta oltalama olarak bildirildi ve diğer öğretmenlerin kutusundan kaldırıldı.</div>':'')+'<h2>'+esc(m.subj)+'</h2><div class="mfrom"><span class="av" style="background:'+m.col+'">'+esc(m.from.charAt(0))+'</span><div><b>'+esc(m.from)+'</b> <code>&lt;'+esc(m.addr)+'&gt;</code><br><span style="color:var(--muted)">Alıcı: sunay@yildizkoleji.k12.tr · '+m.time+'</span></div></div>'+m.body+'</div>';
+   h+='<div class="mcontent">'+(inTrash?'<div class="note info">Bu e-posta çöp kutusunda.</div>':'')+(M.reported[i]?'<div class="note good">Bu e-posta oltalama olarak bildirildi ve diğer öğretmenlerin kutusundan kaldırıldı.</div>':'')+'<h2>'+esc(m.subj)+'</h2><div class="mfrom"><span class="av" style="background:'+m.col+'">'+esc(m.from.charAt(0))+'</span><div><b>'+esc(m.from)+'</b> <code>&lt;'+esc(A(m.addr))+'&gt;</code><br><span style="color:var(--muted)">Alıcı: sunay@yildizkoleji.k12.tr · '+m.time+'</span></div></div>'+m.body+'</div>';
   }
  }
  h+='<div class="status" id="mstat">Hazır</div></div></div>';
@@ -563,7 +590,7 @@ function route(u){
  return {k:'nf',url:'https://'+c};
 }
 function navigate(u){S.br.url=u;save();refresh('browser')}
-RENDER.browser=function(b){
+RENDER.browser=function(b){if(GS())return browserG(b);
  var r=route(S.br.url),shown=r.url||(r.k==='search'?'ara?q='+r.q:'ara'),sec='',title='Yeni sekme';
  if(r.k==='portal'||r.k==='school'){sec='<span class="sec ok">🔒</span>';}
  else if(r.k==='fake'){sec='<span class="sec bad">⚠️ Güvenli değil</span>';}
@@ -733,7 +760,7 @@ RENDER.phone=function(b){
  if(ph.open&&ph.threads[ph.open]){
   var th=ph.threads[ph.open];th.unread=false;
   h+='<div style="display:flex;align-items:center;gap:8px;padding:8px;background:#fff;border-bottom:1px solid var(--line)"><button class="btn gray sm" id="pbk">←</button><b>'+esc(th.name)+'</b></div><div class="chat" id="chat">'+th.msgs.map(function(m){return '<div class="bub'+(m.me?' me':'')+'">'+esc(m.t)+'<small>'+m.at+'</small></div>'}).join('')+'</div>';
-  if(th.quick&&!th.answered)h+='<div class="quick">'+th.quick.map(function(q,i){return '<button data-q="'+i+'">'+esc(q.t)+'</button>'}).join('')+'</div>';
+  if(th.quick&&!th.answered){if(!th.qo||th.qo.length!==th.quick.length){th.qo=shuf(rng(th.quick.length));save()}h+='<div class="quick">'+th.qo.map(function(i){return '<button data-q="'+i+'">'+esc(th.quick[i].t)+'</button>'}).join('')+'</div>';}
   else if(th.quick)h+='<div class="reply" style="justify-content:center;color:var(--muted);font-size:12px">'+(th.blocked?'🚫 Bu hesabı engelledin':'Yanıtın gönderildi')+'</div>';
   else if(th.scam||ph.open==='murat')h+='<form class="reply" id="rf"><input class="inp" id="rt" placeholder="Mesaj yaz" autocomplete="off"><button class="btn">➤</button></form>';
   else h+='<div class="reply" style="justify-content:center;color:var(--muted);font-size:12px">Bu numaraya yanıt verilemez</div>';
@@ -744,14 +771,20 @@ RENDER.phone=function(b){
  if($('chat'))$('chat').scrollTop=1e6;
  if($('pbk'))$('pbk').onclick=function(){ph.open=null;save();refresh('phone')};
  qa('.th',b).forEach(function(x){x.onclick=function(){ph.open=x.dataset.k;save();refresh('phone')}});
- qa('[data-q]',b).forEach(function(x){x.onclick=function(){var th=ph.threads[ph.open],q=th.quick[+x.dataset.q];th.answered=1;
+ qa('[data-q]',b).forEach(function(x){x.onclick=function(){var th=ph.threads[ph.open],q=th.quick[+x.dataset.q];
+  if(q.need&&!needOk(q.need)){toast('🔎 Biraz bekle',q.needMsg||'Önce diğer adımı tamamla.');return}
+  th.answered=1;
   th.msgs.push({t:q.t,me:true,at:now5()});save();refresh('phone');
   if(q.ok>0){if(q.task)complete(q.task);else bonus(30,q.gt||'👏 Velileri korudun',q.gm||'Doğru uyarı yaptın; ödeme yapılmadı.')}
   else penalty(q.ok<0?PEN_WRONG*2:PEN_WRONG,q.bt||(q.ok<0?'🚨 Veli dolandırıcıya ödeme yaptı!':'⚠️ Riskli yanıt'),q.why);
   if(q.after&&ZACT[q.after])ZACT[q.after]();
+  if(q.undo)gUndo(q.undo);
+  if(q.block)th.blocked=1;
+  if(q.go)setTimeout(function(){if(S)gNav(q.go)},900);
   var R=q.re==null?[]:[].concat(q.re);
   R.forEach(function(r,j){setTimeout(function(){if(!S)return;th.msgs.push({t:r,me:false,at:now5()});save();refresh('phone')},1800+j*1400)});
-  if(q.ok<=0&&th.retry)setTimeout(function(){if(!S)return;th.answered=0;save();refresh('phone')},2200+R.length*1400)}});
+  if(q.then)setTimeout(function(){if(!S)return;th.quick=q.then;th.qo=null;th.answered=0;save();refresh('phone')},2200+R.length*1400);
+  else if(q.ok<=0&&th.retry)setTimeout(function(){if(!S)return;th.answered=0;save();refresh('phone')},2200+R.length*1400)}});
  if($('rf'))$('rf').onsubmit=function(e){e.preventDefault();var v=$('rt').value.trim();if(!v)return;var th=ph.threads[ph.open];
   th.msgs.push({t:v,me:true,at:new Date().toTimeString().slice(0,5)});save();refresh('phone');
   var code=S.twofa.code,digits=v.replace(/\D/g,'');
@@ -765,12 +798,13 @@ RENDER.phone=function(b){
 
 /* =================== GÖREVLER =================== */
 RENDER.note=function(b){
+ if(GS()){b.innerHTML='<div style="background:#fff59d;min-height:100%;padding:16px 18px;font-family:\'Segoe Print\',\'Comic Sans MS\',cursive;font-size:16px;line-height:1.7;color:#3a3200">'+GS().note+'</div>';return}
  if(S.sc==='zorba'){b.innerHTML='<div style="background:#fff59d;min-height:100%;padding:16px 18px;font-family:\'Segoe Print\',\'Comic Sans MS\',cursive;font-size:16px;line-height:1.7;color:#3a3200">'+ZNOTE+'</div>';return}
  b.innerHTML='<div style="background:#fff59d;min-height:100%;padding:16px 18px;font-family:\'Segoe Print\',\'Comic Sans MS\',cursive;font-size:16px;line-height:1.7;color:#3a3200">📌 <b>Unutma!</b><br>Okul e-postası:<br>sunay@yildizkoleji.k12.tr<br>Şifre: <b>Pamuk1988</b><br>🐱 Pamuk\'un mamasını al!'+(S.obj.pw?'<div style="margin-top:12px;font-family:system-ui;font-size:13px;background:#fff8;border-radius:8px;padding:8px">✏️ Şifre değiştirildi. Yeni şifreyi buraya yazma; aklında tut ya da bir şifre yöneticisi kullan!</div>':'')+'</div>';
 };
 RENDER.tasks=function(b){
  var n=objs().filter(function(o){return done(o.id)}).length;
- b.innerHTML='<div class="tasks"><b>'+(S.sc==='zorba'?'Elif\'e yardım et':'Hesabı kurtar')+'</b> <span style="color:var(--muted)">· '+n+'/'+objs().length+'</span><div class="prog"><i style="width:'+(n/objs().length*100)+'%"></i></div>'+objs().map(function(o){var d=done(o.id);return '<div class="tk'+(d?' done':'')+'"><span class="c">'+(d?'✓':'')+'</span><div><b>'+o.t+'</b><small>'+o.s+'</small></div></div>'}).join('')+'<p style="font-size:12px;color:var(--muted);margin:10px 2px 0">Uygulamaları açmak için masaüstündeki simgelere tıkla. Pencereleri başlıklarından sürükleyebilirsin.</p></div>';
+ b.innerHTML='<div class="tasks"><b>'+(GS()?GS().goal:S.sc==='zorba'?'Elif\'e yardım et':'Hesabı kurtar')+'</b> <span style="color:var(--muted)">· '+n+'/'+objs().length+'</span><div class="prog"><i style="width:'+(n/objs().length*100)+'%"></i></div>'+objs().map(function(o){var d=done(o.id);return '<div class="tk'+(d?' done':'')+'"><span class="c">'+(d?'✓':'')+'</span><div><b>'+o.t+'</b><small>'+o.s+'</small></div></div>'}).join('')+'<p style="font-size:12px;color:var(--muted);margin:10px 2px 0">Uygulamaları açmak için masaüstündeki simgelere tıkla. Pencereleri başlıklarından sürükleyebilirsin.</p></div>';
 };
 
 /* =================== İPUCU =================== */
@@ -779,10 +813,10 @@ $('hintBtn').onclick=function(){
  var o=objs().filter(function(x){return !done(x.id)})[0];if(!o)return;
  var n=S.hintN[o.id]||0,h='<div class="sbox2"><h2 style="margin-top:0">💡 İpucu</h2><p><b>'+o.t+'</b></p>';
  for(var i=0;i<n;i++)h+='<div class="hint">'+o.h[i]+'</div>';
- if(n<o.h.length)h+='<button class="btn" id="th" style="width:100%">'+(n?'Bir ipucu daha':'İpucu al')+' (−1 dakika)</button>';
+ if(n<o.h.length)h+='<button class="btn" id="th" style="width:100%">'+(n?'Bir ipucu daha':'İpucu al')+' (−'+fmt(PEN_HINT*DF())+')</button>';
  h+='<button class="btn gray" id="hc" style="width:100%;margin-top:8px">Kapat</button></div>';
  $('screen').innerHTML=h;$('screen').classList.remove('hidden');
- if($('th'))$('th').onclick=function(){S.hintN[o.id]=n+1;S.hintsUsed++;S.penalty+=PEN_HINT;save();tick();$('hintBtn').onclick()};
+ if($('th'))$('th').onclick=function(){S.hintN[o.id]=n+1;S.hintsUsed++;S.penalty+=Math.round(PEN_HINT*DF());logE('hint','İpucu: '+o.t);save();tick();$('hintBtn').onclick()};
  $('hc').onclick=function(){$('screen').classList.add('hidden')};
 };
 
@@ -859,7 +893,7 @@ var ZCOMMENTS=[
 var ZMAILS=[
  {reply:1,from:'Okul Müdürlüğü',addr:'mudurluk@yildizkoleji.k12.tr',col:'#123a6b',subj:'Siber zorbalığa karşı birlikte',time:'Pzt 09:00',body:'<p>Sevgili öğrencilerimiz,</p><p>İnternette alay etmek, dışlamak, sahte hesap açmak ya da utandırıcı paylaşımları yaymak <b>siber zorbalıktır</b>.</p><p>Siber zorbalığa uğrarsanız ya da tanık olursanız:</p><ul><li>Yanıt vermeyin, paylaşımı yaymayın.</li><li>Ekran görüntüsü alarak <b>kanıtları saklayın</b>.</li><li>Hesabı şikâyet edin ve engelleyin.</li><li>Rehberlik servisimize yazın: <b>rehberlik@yildizkoleji.k12.tr</b></li></ul><p>Okul Müdürlüğü</p>'},
  {noreply:1,from:'Paylaş',addr:'bildirim@paylas.app',col:'#e91e63',subj:'@'+ZFAKE+' seni bir gönderide etiketledi',time:'Bugün 07:42',body:'<p>@'+ZFAKE+' seni bir gönderide etiketledi:</p><p style="background:#f3f6f9;padding:10px;border-radius:8px">“Sınavdan sonra Elif 🤣🤣 Bu suratı herkes görsün! @deniz.k @ayaz_07 #8B”</p><p style="color:var(--muted);font-size:13px">Gönderiyi görmek için Paylaş uygulamasını aç.</p>'},
- {from:'Paylaş Destek',addr:'guvenlik@paylas-destek.net',col:'#d93636',subj:'⚠️ Hesabın 24 saat içinde kapatılacak!',time:'Bugün 08:15',spam:1,body:'<p>Merhaba,</p><p>Hesabın hakkında <b>çok sayıda şikâyet</b> aldık. Hesabının kapatılmaması için <b>24 saat içinde</b> kullanıcı adını ve şifreni aşağıdaki sayfada doğrula.</p><p><span class="mbutton">Hesabımı doğrula</span></p><p style="color:var(--muted);font-size:13px">Paylaş Güvenlik Ekibi</p>'},
+ {from:'Paylaş Destek',addr:{kolay:'hesap-iptal@paylas-uyari.xyz',normal:'guvenlik@paylas-destek.net',zor:'guvenlik@paylas.app.destek-merkezi.net'},col:'#d93636',subj:'⚠️ Hesabın 24 saat içinde kapatılacak!',time:'Bugün 08:15',spam:1,body:'<p>Merhaba,</p><p>Hesabın hakkında <b>çok sayıda şikâyet</b> aldık. Hesabının kapatılmaması için <b>24 saat içinde</b> kullanıcı adını ve şifreni aşağıdaki sayfada doğrula.</p><p><span class="mbutton">Hesabımı doğrula</span></p><p style="color:var(--muted);font-size:13px">Paylaş Güvenlik Ekibi</p>'},
  {from:'Kitap Kulübü',addr:'bulten@kitapkulubu.com.tr',col:'#14924a',subj:'Kasım ayı kitap önerileri',time:'Dün 10:05',body:'<p>Merhaba,</p><p>Bu ayın önerileri: <b>Küçük Prens</b>, <b>Şeker Portakalı</b> ve <b>Momo</b>. Keyifli okumalar!</p>'}
 ];
 var ZEXTRA={
@@ -876,7 +910,7 @@ var ZCONTACTS=[
  {n:'Ayaz Yılmaz (sınıf arkadaşı)',a:'ayaz.y@eposta.com'}
 ];
 var ZREASONS=['Spam','Başka birini taklit ediyor','Zorbalık veya taciz','Telif hakkı ihlali','Sadece hoşuma gitmedi'];
-function zMails(){return ZMAILS.concat(S.zm.extra.map(function(k){return ZEXTRA[k]}))}
+function zMails(){var B=ZMAILS;if(S.zmo)B=S.zmo.map(function(i){return ZMAILS[i]});return B.concat(S.zm.extra.map(function(k){return ZEXTRA[k]}))}
 function zUnread(){var M=S.zm;return zMails().filter(function(m,i){return !M.read[i]&&!(M.del&&M.del[i])&&!(M.spam&&M.spam[i])}).length}
 function zShots(){return Object.keys(S.z.shots).length}
 function zEvidenceOk(){var s=S.z.shots;return !!(s.profile&&s.post&&(s.c0||s.c1))}
@@ -909,12 +943,12 @@ function mailZ(b){
   h+='<div class="mtools"></div><div class="mcontent">'+(sm?'<h2>'+esc(sm.subj)+'</h2><div class="mfrom"><span class="av" style="background:#1a66d2">D</span><div><b>Deniz Kaya</b> <code>&lt;deniz.k@yildizkoleji.k12.tr&gt;</code><br><span style="color:var(--muted)">Kime: '+esc(sm.toName)+' · '+sm.time+'</span></div></div><div style="white-space:pre-wrap">'+esc(sm.body)+'</div>'+(sm.att?'<div class="note info">📎 '+sm.att+' ekran görüntüsü eklendi</div>':''):'<p style="color:var(--muted)">Gönderilmiş e-posta yok.</p>')+'</div>';
  }else if(M.reply!=null&&list[M.reply]){
   var rm=list[M.reply];
-  h+='<div class="mtools"><b style="padding:6px">↩ Yanıt</b></div><div class="mcontent"><div class="cmp"><div><span>Kime:</span> '+esc(rm.from)+' <code>&lt;'+esc(rm.addr)+'&gt;</code></div><div><span>Konu:</span> Ynt: '+esc(rm.subj.replace(/^Ynt: /,''))+'</div><textarea class="inp" id="zrb" rows="6" placeholder="Yanıtını yaz…">'+esc(M.rbody||'')+'</textarea><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" id="zrsend">➤ Gönder</button><button class="btn gray" id="zrcancel">Vazgeç</button></div></div><div class="mquote"><b>'+esc(rm.from)+'</b> yazdı:<br>'+rm.body+'</div></div>';
+  h+='<div class="mtools"><b style="padding:6px">↩ Yanıt</b></div><div class="mcontent"><div class="cmp"><div><span>Kime:</span> '+esc(rm.from)+' <code>&lt;'+esc(A(rm.addr))+'&gt;</code></div><div><span>Konu:</span> Ynt: '+esc(rm.subj.replace(/^Ynt: /,''))+'</div><textarea class="inp" id="zrb" rows="6" placeholder="Yanıtını yaz…">'+esc(M.rbody||'')+'</textarea><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" id="zrsend">➤ Gönder</button><button class="btn gray" id="zrcancel">Vazgeç</button></div></div><div class="mquote"><b>'+esc(rm.from)+'</b> yazdı:<br>'+rm.body+'</div></div>';
  }else if(ids.indexOf(M.open)<0){
   h+='<div class="mtools"></div><div class="mcontent"><p style="color:var(--muted)">Okumak için bir e-posta seç.</p></div>';
  }else{
   var i=M.open,m=list[i],f=fold(i);M.read[i]=1;
-  h+='<div class="mtools">'+(f==='in'?'<button class="btn sm gray" id="zrep2">↩ Yanıtla</button><button class="btn sm gray" id="zdel">🗑 Sil</button><button class="btn sm red" id="zspam">⚠️ Spam bildir</button>':'<button class="btn sm gray" id="zback">↩ Gelen kutusuna taşı</button>')+'</div><div class="mcontent">'+(f==='spam'?'<div class="note good">Bu e-posta spam olarak bildirildi.</div>':f==='trash'?'<div class="note info">Bu e-posta çöp kutusunda.</div>':'')+'<h2>'+esc(m.subj)+'</h2><div class="mfrom"><span class="av" style="background:'+m.col+'">'+esc(m.from.charAt(0))+'</span><div><b>'+esc(m.from)+'</b> <code>&lt;'+esc(m.addr)+'&gt;</code><br><span style="color:var(--muted)">Alıcı: deniz.k@yildizkoleji.k12.tr · '+m.time+'</span></div></div>'+m.body+'</div>';
+  h+='<div class="mtools">'+(f==='in'?'<button class="btn sm gray" id="zrep2">↩ Yanıtla</button><button class="btn sm gray" id="zdel">🗑 Sil</button><button class="btn sm red" id="zspam">⚠️ Spam bildir</button>':'<button class="btn sm gray" id="zback">↩ Gelen kutusuna taşı</button>')+'</div><div class="mcontent">'+(f==='spam'?'<div class="note good">Bu e-posta spam olarak bildirildi.</div>':f==='trash'?'<div class="note info">Bu e-posta çöp kutusunda.</div>':'')+'<h2>'+esc(m.subj)+'</h2><div class="mfrom"><span class="av" style="background:'+m.col+'">'+esc(m.from.charAt(0))+'</span><div><b>'+esc(m.from)+'</b> <code>&lt;'+esc(A(m.addr))+'&gt;</code><br><span style="color:var(--muted)">Alıcı: deniz.k@yildizkoleji.k12.tr · '+m.time+'</span></div></div>'+m.body+'</div>';
  }
  h+='<div class="status">Deniz Kaya · deniz.k@yildizkoleji.k12.tr</div></div></div>';
  b.innerHTML=h;icons();
@@ -1056,13 +1090,555 @@ function zTick(l){
  if(!S.done&&!S.z.reported&&l>0&&l<=60)SFX.tick();
 }
 
+/* =================== GENEL SENARYO MOTORU =================== */
+function GS(){return S&&GSC[S.sc]||null}
+function DF(){return S?({kolay:.5,normal:1,zor:1.5}[S.diff||'normal']||1):1}
+function A(x){return x&&typeof x==='object'?(x[(S&&S.diff)||'normal']||x.normal):x}
+function shuf(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function rng(n){var a=[];for(var i=0;i<n;i++)a.push(i);return a}
+function logE(k,a,b){if(!S||!S.start)return;S.log=S.log||[];S.log.push({t:Math.round(elapsed()),k:k,a:String(a||''),b:String(b||'')})}
+function needOk(n){return n.indexOf('ev:')===0?!!S.events[n.slice(3)]:done(n)}
+function gDef(k){var g=GS();return (g.threads||[]).filter(function(t){return t.k===k})[0]}
+function gThread(def){
+ var th=S.phone.threads[def.k]={name:def.name,av:def.av,msgs:def.msgs.map(function(t){return {t:t,me:false,at:now5()}}),quick:def.quick,retry:def.retry!==false,unread:true};
+ S.phone.order=[def.k].concat(S.phone.order.filter(function(k){return k!==def.k}));
+ return th;
+}
+function gInit(){
+ var g=GS();
+ S.g={mo:shuf(rng(g.mails.length)),extra:[],rm:[],read:{},del:{},spam:{},sent:[],folder:'in',open:0,reply:null,rbody:'',url:'ara',hist:[],site:{},login:{},tf:{},once:{}};
+ (g.threads||[]).filter(function(t){return !t.later}).slice().reverse().forEach(gThread);
+ S.phone.open=null;save();
+}
+function gUndo(id){
+ delete S.obj[id];S.g.tf={};save();refresh('tasks');refresh('browser');
+}
+function gEff(e){
+ if(!e)return;
+ if(e.pen)penalty(e.pen[0],e.pen[1],e.pen[2]);
+ if(e.bonus){var k='b:'+e.bonus[1];if(!S.g.once[k]){S.g.once[k]=1;bonus(e.bonus[0],e.bonus[1],e.bonus[2])}}
+ if(e.toast)toast(e.toast[0],e.toast[1]);
+ if(e.task)complete(e.task);
+ if(e.undo)gUndo(e.undo);
+ if(e.go)setTimeout(function(){if(S)gNav(e.go)},500);
+ save();
+}
+
+/* ----- Posta ----- */
+function gMails(){var g=GS(),b=S.g.mo.map(function(i){return g.mails[i]});return b.concat(S.g.extra.map(function(i){return g.emails[i]})).concat(S.g.rm)}
+function gUnread(){var G=S.g;return gMails().filter(function(m,i){return !G.read[i]&&!G.del[i]&&!G.spam[i]}).length}
+function mailG(b){
+ var G=S.g,list=gMails();
+ var fold=function(k){return G.spam[k]?'spam':G.del[k]?'trash':'in'};
+ var ids=rng(list.length).filter(function(k){return fold(k)===G.folder});
+ var h='<div class="mail"><div class="mside"><div class="mfold">'+[['in','📥 Gelen Kutusu',gUnread()],['sent','📤 Gönderilenler',0],['spam','⚠️ Spam',0],['trash','🗑 Çöp Kutusu',0]].map(function(f){return '<button data-f="'+f[0]+'" class="'+(G.folder===f[0]?'on':'')+'">'+f[1]+(f[2]?' <i>'+f[2]+'</i>':'')+'</button>'}).join('')+'</div>';
+ if(G.folder==='sent')h+=G.sent.length?G.sent.map(function(x,k){return '<button class="mitem" data-s="'+k+'"><b>Kime: '+esc(x.toName)+'</b><span>'+esc(x.subj)+'</span><small>'+x.time+'</small></button>'}).reverse().join(''):'<div class="mempty">Gönderilmiş e-posta yok</div>';
+ else h+=ids.length?ids.map(function(k){var x=list[k];return '<button class="mitem'+(k===G.open&&G.reply==null?' sel':'')+(G.read[k]?'':' unread')+'" data-k="'+k+'"><b>'+esc(x.from)+'</b><span>'+esc(x.subj)+'</span><small>'+x.time+'</small></button>'}).join(''):'<div class="mempty">'+({spam:'Spam klasörü boş',trash:'Çöp kutusu boş',in:'Gelen kutusu boş'}[G.folder])+'</div>';
+ h+='</div><div class="mread">';
+ var cur=null;
+ if(G.folder==='sent'){
+  var sm=G.sent[G.sentOpen||0];
+  h+='<div class="mtools"></div><div class="mcontent">'+(sm?'<h2>'+esc(sm.subj)+'</h2><div class="mfrom"><span class="av" style="background:#1a66d2">'+esc(GS().role.charAt(0))+'</span><div><b>'+esc(GS().role)+'</b><br><span style="color:var(--muted)">Kime: '+esc(sm.toName)+' · '+sm.time+'</span></div></div><div style="white-space:pre-wrap">'+esc(sm.body)+'</div>':'<p style="color:var(--muted)">Gönderilmiş e-posta yok.</p>')+'</div>';
+ }else if(G.reply!=null&&list[G.reply]){
+  var rm=list[G.reply];
+  h+='<div class="mtools"><b style="padding:6px">↩ Yanıt</b></div><div class="mcontent"><div class="cmp"><div><span>Kime:</span> '+esc(rm.from)+' <code>&lt;'+esc(A(rm.addr))+'&gt;</code></div><div><span>Konu:</span> Ynt: '+esc(rm.subj.replace(/^Ynt: /,''))+'</div><textarea class="inp" id="grb" rows="6" placeholder="Yanıtını yaz…">'+esc(G.rbody||'')+'</textarea><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" id="grsend">➤ Gönder</button><button class="btn gray" id="grcancel">Vazgeç</button></div></div><div class="mquote"><b>'+esc(rm.from)+'</b> yazdı:<br>'+rm.body+'</div></div>';
+ }else if(ids.indexOf(G.open)<0){
+  h+='<div class="mtools"></div><div class="mcontent"><p style="color:var(--muted)">Okumak için bir e-posta seç.</p></div>';
+ }else{
+  cur=G.open;var m=list[cur],f=fold(cur);G.read[cur]=1;
+  h+='<div class="mtools">'+(f==='in'?'<button class="btn sm gray" id="grep">↩ Yanıtla</button><button class="btn sm gray" id="gdel">🗑 Sil</button><button class="btn sm red" id="gspam">⚠️ Spam bildir</button>':'<button class="btn sm gray" id="gback">↩ Gelen kutusuna taşı</button>')+'</div><div class="mcontent">'+(f==='spam'?'<div class="note good">Bu e-posta spam olarak bildirildi.</div>':f==='trash'?'<div class="note info">Bu e-posta çöp kutusunda.</div>':'')+'<h2>'+esc(m.subj)+'</h2><div class="mfrom"><span class="av" style="background:'+m.col+'">'+esc(m.from.charAt(0))+'</span><div><b>'+esc(m.from)+'</b> <code>&lt;'+esc(A(m.addr))+'&gt;</code><br><span style="color:var(--muted)">Alıcı: '+esc(GS().mailAddr)+' · '+m.time+'</span></div></div>'+m.body+'</div>';
+ }
+ h+='<div class="status" id="gstat">Hazır</div></div></div>';
+ b.innerHTML=h;icons();
+ qa('.mfold button',b).forEach(function(x){x.onclick=function(){G.folder=x.dataset.f;G.reply=null;var l=rng(list.length).filter(function(k){return fold(k)===G.folder});if(l.length&&l.indexOf(G.open)<0)G.open=l[0];save();refresh('mail')}});
+ qa('.mitem[data-k]',b).forEach(function(x){x.onclick=function(){G.open=+x.dataset.k;G.reply=null;save();refresh('mail')}});
+ qa('.mitem[data-s]',b).forEach(function(x){x.onclick=function(){G.sentOpen=+x.dataset.s;save();refresh('mail')}});
+ qa('[data-go]',b).forEach(function(x){
+  x.onmouseenter=function(){var s=$('gstat');if(s)s.textContent='🔗 http://'+x.dataset.go};x.onmouseleave=function(){var s=$('gstat');if(s)s.textContent='Hazır'};
+  x.onclick=function(){gNav(x.dataset.go);openWin('browser')};
+ });
+ if($('grcancel'))$('grcancel').onclick=function(){G.reply=null;save();refresh('mail')};
+ if($('grb'))$('grb').oninput=function(){G.rbody=this.value;save()};
+ if($('grsend'))$('grsend').onclick=function(){
+  var rm=list[G.reply],body=$('grb').value.trim();if(!body){shake($('grb'));return}
+  G.sent.push({toName:rm.from,subj:'Ynt: '+rm.subj.replace(/^Ynt: /,''),body:body,time:now5()});G.sentOpen=G.sent.length-1;G.reply=null;G.folder='sent';save();refresh('mail');
+  if(rm.trap){penalty(PEN_WRONG,'🎣 Sahte e-postaya yanıt verdin','Yanıt vermek adresinin aktif olduğunu gösterir. Sahte e-postalar yanıtlanmaz, spam olarak bildirilir.');
+   if(rm.trapRe&&!G.once['tr:'+rm.subj]){G.once['tr:'+rm.subj]=1;setTimeout(function(){if(!S)return;G.rm.push(rm.trapRe);save();refresh('mail');icons();toast('📧 Yeni e-posta',rm.trapRe.from+': '+rm.trapRe.subj)},5000)}}
+  else if(rm.noreply){setTimeout(function(){if(!S)return;G.rm.push({from:'Posta Sistemi',addr:'postmaster@posta.okulos',col:'#5d6c7c',subj:'Teslim edilemedi: yanıtınız',time:'Şimdi',body:'<p>Yanıtın teslim edilemedi: <b>'+esc(A(rm.addr))+'</b> otomatik bildirim adresidir ve yanıt kabul etmez.</p>'});save();refresh('mail');icons();toast('📧 Yeni e-posta','Yanıtın teslim edilemedi.')},3000)}
+  else{toast('📤 Yanıt gönderildi','Kime: '+esc(rm.from),'good',true);if(rm.re&&!G.once['re:'+rm.subj]){G.once['re:'+rm.subj]=1;setTimeout(function(){if(!S)return;G.rm.push(rm.re);save();refresh('mail');icons();toast('📧 Yeni e-posta',rm.re.from+': '+rm.re.subj)},5000)}}
+ };
+ if(cur==null)return;
+ var cm=list[cur];
+ if($('grep'))$('grep').onclick=function(){G.reply=cur;G.rbody='';save();refresh('mail');setTimeout(function(){var t=$('grb');if(t)t.focus()},50)};
+ if($('gdel'))$('gdel').onclick=function(){G.del[cur]=1;save();refresh('mail');
+  if(cm.trap)toast('🗑 Çöp kutusuna taşındı','Sildin ama spam olarak bildirmedin. Bildirirsen benzer e-postalar engellenir.');else toast('🗑 Çöp kutusuna taşındı',esc(cm.subj),'',true)};
+ if($('gspam'))$('gspam').onclick=function(){
+  if(cm.trap){G.spam[cur]=1;save();refresh('mail');if(cm.task&&!done(cm.task))complete(cm.task);else toast('⚠️ Spam bildirildi','Bu sahte e-posta da engellendi.','good')}
+  else penalty(PEN_WRONG,'Bu e-posta spam değildi','Gönderen tanıdık ve gerçek bir adres; senden şifre, para ya da bilgi istemiyor.')};
+ if($('gback'))$('gback').onclick=function(){delete G.del[cur];delete G.spam[cur];G.folder='in';save();refresh('mail')};
+}
+
+/* ----- Tarayıcı ----- */
+function gClean(u){return norm(u).replace(/^https?:\/\//,'').replace(/^www\./,'').replace(/\/+$/,'')}
+function gRoute(u){
+ var g=GS(),c=gClean(u);
+ if(c===''||c==='ara')return {k:'home'};
+ if(c.indexOf('ara?q=')===0)return {k:'search',q:decodeURIComponent(c.slice(6))};
+ if(g.sites[c])return {k:'site',key:c};
+ var host=c.split('/')[0];
+ if(g.sites[host])return {k:'site',key:host};
+ if(c.indexOf('.')<0||c.indexOf(' ')>=0)return {k:'search',q:String(u).trim()};
+ return {k:'nf',url:c};
+}
+function gNav(u){var G=S.g;G.hist.push(G.url);G.url=u;save();if(wins.browser)refresh('browser');else openWin('browser')}
+function browserG(b){
+ var G=S.g,g=GS(),r=gRoute(G.url),site=r.k==='site'?g.sites[r.key]:null;
+ var shown=r.k==='site'?(site.secure?'https://':'http://')+r.key:r.k==='nf'?'https://'+r.url:r.k==='search'?'ara?q='+r.q:'ara';
+ var sec=site?(site.secure?'<span class="sec ok">🔒</span>':'<span class="sec bad">⚠️ Güvenli değil</span>'):'<span class="sec">🔍</span>';
+ var title=site?site.head.replace(/<[^>]+>/g,''):r.k==='search'?r.q+' – Arama':r.k==='nf'?'Siteye ulaşılamıyor':'Arama';
+ b.innerHTML='<div class="brw"><div class="btabs"><div class="btab">'+esc(title)+'</div></div><div class="bnav"><button id="gbk" title="Geri">←</button><button id="gbr" title="Yenile">⟳</button><form class="addr" id="gaf">'+sec+'<input id="gai" value="'+esc(shown)+'" spellcheck="false" autocomplete="off" placeholder="Arama yapın veya adres yazın"></form></div><div class="bpage" id="gbp"></div></div>';
+ var p=$('gbp');
+ if(r.k==='home'){
+  p.innerHTML='<div class="search"><div class="slogo"><b>B</b><b>u</b><b>l</b><b>!</b></div><form class="sbox" id="gsf"><input class="inp" id="gsq" placeholder="Ne aramak istersin?"><button class="btn">Ara</button></form><p style="color:var(--muted);text-align:center;font-size:13px;margin-top:16px">İpucu: '+esc(g.searchHint||'Merak ettiğin konuyu yaz ve ara.')+'</p></div>';
+ }else if(r.k==='search'){
+  p.innerHTML='<div class="search" style="padding-top:20px"><form class="sbox" id="gsf"><input class="inp" id="gsq" value="'+esc(r.q)+'"><button class="btn">Ara</button></form><div style="margin-top:14px">'+g.search.map(function(x){return '<div class="res"><small>'+(x.ad?'<span class="ad">Sponsorlu</span>':'')+esc(x.url.split('/')[0])+'</small><a data-go="'+esc(x.url)+'">'+esc(x.title)+'</a><p>'+esc(x.d)+'</p></div>'}).join('')+'</div></div>';
+ }else if(r.k==='nf'){
+  p.innerHTML='<div class="nf"><div class="big">🦖</div><h3>Bu siteye ulaşılamıyor</h3><p>'+esc(r.url)+' adresi bulunamadı.</p></div>';
+ }else gSite(p,r.key,site);
+ if($('gsf'))$('gsf').onsubmit=function(e){e.preventDefault();gNav('ara?q='+encodeURIComponent($('gsq').value||'ara'))};
+ qa('[data-go]',p).forEach(function(a){a.onclick=function(){gNav(a.dataset.go)}});
+ $('gaf').onsubmit=function(e){e.preventDefault();gNav($('gai').value)};
+ $('gai').onfocus=function(){this.select()};
+ $('gbk').onclick=function(){if(G.hist.length){G.url=G.hist.pop();save();refresh('browser')}};
+ $('gbr').onclick=function(){refresh('browser')};
+}
+function gSite(p,key,site){
+ var G=S.g,st=G.site[key]=G.site[key]||{},h='<div class="site"><div class="shead">'+site.head+'</div><div class="gsite">',bind=[];
+ for(var j=0;j<site.blocks.length;j++){
+  var B=site.blocks[j],id='gb'+j;
+  if(B.visit){if(!done(B.visit))(function(t){setTimeout(function(){if(S&&!done(t))complete(t)},700)})(B.visit);continue}
+  if(B.h)h+='<h2>'+B.h+'</h2>';
+  else if(B.p)h+='<p>'+B.p+'</p>';
+  else if(B.warn)h+='<div class="urgent">⏰ '+B.warn+'</div>';
+  else if(B.img)h+='<div class="gimg" style="background:'+(B.bg||'#eef2f7')+'">'+B.img+'</div>';
+  else if(B.link)h+='<p><a class="btn" data-go="'+esc(B.link.go)+'" style="display:inline-block;text-decoration:none">'+B.link.t+'</a></p>';
+  else if(B.form){
+   if(st['f'+j])h+='<div class="note bad">'+(B.form.after||'Bu sayfa sahteydi! Girdiğin bilgiler dolandırıcılara gitti.')+'</div>';
+   else{h+='<form class="gform" id="'+id+'">'+B.form.fields.map(function(f,i){return '<label>'+f+'<input class="inp" autocomplete="off" name="f'+i+'"></label>'}).join('')+'<button class="btn" style="width:100%;margin-top:10px">'+B.form.btn+'</button></form>';bind.push([id,B,j,'form'])}
+  }
+  else if(B.btns){h+='<div class="gbtns" id="'+id+'">'+B.btns.map(function(x,i){return '<button class="btn '+(x.cls||'')+'" data-i="'+i+'">'+x.t+'</button>'}).join('')+'</div>';bind.push([id,B,j,'btns'])}
+  else if(B.perm){
+   var P=st.p=st.p||{};
+   if(st.permOk)h+='<div class="note good">✅ İzinler kaydedildi.</div>';
+   else{h+='<div class="pcard" id="'+id+'"><b>Bu uygulama şu izinleri istiyor:</b>'+B.perm.items.map(function(it){return '<div class="perm"><span>'+it.t+'</span><span class="pb"><button class="'+(P[it.k]==='a'?'on a':'')+'" data-k="'+it.k+'" data-v="a">İzin ver</button><button class="'+(P[it.k]==='d'?'on d':'')+'" data-k="'+it.k+'" data-v="d">Reddet</button></span></div>'}).join('')+'<div class="gmsg"></div><button class="btn green" data-save="1" style="width:100%;margin-top:8px">'+B.perm.btn+'</button></div>';bind.push([id,B,j,'perm'])}
+  }
+  else if(B.pick){
+   if(st['k'+j])h+='<div class="note good">✅ Kaydedildi.</div>';
+   else{h+='<div class="pcard" id="'+id+'"><b>'+B.pick.q+'</b>'+B.pick.items.map(function(it,i){return '<label class="gpick"><input type="checkbox" data-i="'+i+'"> '+it.t+'</label>'}).join('')+'<div class="gmsg"></div><button class="btn" data-save="1" style="width:100%;margin-top:8px">'+B.pick.btn+'</button></div>';bind.push([id,B,j,'pick'])}
+  }
+  else if(B.login){
+   if(!G.login[B.login.key]){h+='<div class="login" style="margin:10px auto"><h3>Giriş yap</h3><form id="'+id+'"><label>Kullanıcı adı</label><input class="inp" value="'+esc(B.login.u)+'" readonly style="background:#f3f6f9"><label>Şifre</label><input class="inp" type="password" name="pw" autocomplete="off"><div class="gmsg"></div><button class="btn" style="width:100%;margin-top:12px">Giriş yap</button></form></div>';bind.push([id,B,j,'login']);break}
+   else h+='<div class="note good" style="margin-top:0">👤 '+esc(B.login.u)+' olarak giriş yapıldı.</div>';
+  }
+  else if(B.twofa){
+   var T=G.tf[B.twofa.key]||{};
+   if(done(B.twofa.task))h+='<div class="note good">✅ İki aşamalı doğrulama açık.</div>';
+   else if(T.pending)h+='<div class="pcard" id="'+id+'"><b>📲 İki aşamalı doğrulama</b><div class="note info">Telefonuna 6 haneli bir kod gönderdik. Kodu buraya yaz.</div><form style="display:flex;gap:8px"><input class="inp" maxlength="6" inputmode="numeric" placeholder="______" style="max-width:170px;font-size:20px;letter-spacing:4px"><button class="btn">Doğrula</button></form><div class="gmsg"></div></div>';
+   else h+='<div class="pcard" id="'+id+'"><b>📲 İki aşamalı doğrulama: <span class="tag red">Kapalı</span></b><p style="margin:6px 0 10px">Açıldığında şifren çalınsa bile telefonuna gelen kod olmadan kimse giremez.</p><button class="btn green" data-on="1">Aç</button></div>';
+   if(!done(B.twofa.task))bind.push([id,B,j,'twofa']);
+  }
+ }
+ p.innerHTML=h+'</div></div>';
+ qa('[data-go]',p).forEach(function(a){a.onclick=function(){gNav(a.dataset.go)}});
+ bind.forEach(function(x){
+  var el=$(x[0]),B=x[1],j=x[2],t=x[3];if(!el)return;var msg=el.querySelector('.gmsg');
+  if(t==='form')el.onsubmit=function(e){e.preventDefault();st['f'+j]=1;save();gEff(B.form.eff);refresh('browser')};
+  if(t==='btns')qa('button',el).forEach(function(bt){bt.onclick=function(){var x2=B.btns[+bt.dataset.i];gEff(x2.eff);if(x2.eff&&(x2.eff.task||x2.eff.pen))refresh('browser')}});
+  if(t==='perm'){
+   qa('[data-k]',el).forEach(function(bt){bt.onclick=function(){st.p[bt.dataset.k]=bt.dataset.v;save();refresh('browser')}});
+   el.querySelector('[data-save]').onclick=function(){
+    var it=B.perm.items,und=it.filter(function(i){return !st.p[i.k]});
+    if(und.length){msg.innerHTML='<div class="note bad">Her izin için bir seçim yap.</div>';return}
+    var bad=it.filter(function(i){return i.need===0&&st.p[i.k]==='a'});
+    if(bad.length){penalty(PEN_WRONG*bad.length,'⚠️ Gereksiz izin verdin',bad.map(function(i){return i.why}).join(' '));msg.innerHTML='<div class="note bad">'+bad.map(function(i){return '<b>'+i.t+':</b> '+i.why}).join('<br>')+'</div>';return}
+    st.permOk=1;save();complete(B.perm.task);if(B.perm.go)gNav(B.perm.go);else refresh('browser');
+   };
+  }
+  if(t==='pick')el.querySelector('[data-save]').onclick=function(){
+   var ch=qa('input[type=checkbox]',el).filter(function(c){return c.checked}).map(function(c){return B.pick.items[+c.dataset.i]});
+   var bad=ch.filter(function(i){return !i.ok});
+   if(bad.length){penalty(PEN_WRONG,'⚠️ Gereksiz kişisel bilgi',B.pick.why);msg.innerHTML='<div class="note bad">'+B.pick.why+'</div>';return}
+   st['k'+j]=1;save();complete(B.pick.task);if(B.pick.go)gNav(B.pick.go);else refresh('browser');
+  };
+  if(t==='login')el.onsubmit=function(e){e.preventDefault();var v=el.querySelector('[name=pw]').value;
+   if(v===B.login.pw){G.login[B.login.key]=1;save();toast('🔓 Giriş yapıldı',esc(B.login.u),'good',true);refresh('browser')}
+   else{msg.innerHTML='<div class="note bad">Şifre hatalı.'+(v.toLocaleLowerCase('tr')===B.login.pw.toLocaleLowerCase('tr')?' Büyük/küçük harfe dikkat et.':' Şifre masaüstündeki 📌 Not\'ta yazıyor.')+'</div>';shake(el)}};
+  if(t==='twofa'){
+   var on=el.querySelector('[data-on]');
+   if(on)on.onclick=function(){var k=B.twofa.key,code=String(100000+Math.floor(Math.random()*900000));G.tf[k]={code:code,pending:1};save();
+    sms(k+'-kod',B.twofa.name,B.twofa.name+' doğrulama kodun: '+code+'. Bu kodu KİMSEYLE paylaşma. Destek ekibimiz bu kodu asla istemez.');
+    if(B.twofa.scam&&!S.events['scam-'+k]){S.events['scam-'+k]=1;save();setTimeout(function(){if(!S)return;var d=gDef(B.twofa.scam),th=gThread(d);save();refresh('phone');icons();toast((d.av||'📱')+' '+d.name,th.msgs[th.msgs.length-1].t.slice(0,90))},6000)}
+    refresh('browser')};
+   var fm=el.querySelector('form');
+   if(fm)fm.onsubmit=function(e){e.preventDefault();var v=fm.querySelector('input').value.trim(),T=G.tf[B.twofa.key]||{};
+    if(T.code&&v===T.code){T.on=1;T.pending=0;save();complete(B.twofa.task);refresh('browser')}
+    else msg.innerHTML='<div class="note bad">Kod hatalı. Telefondaki son kodu kontrol et.</div>'};
+  }
+ });
+}
+
+/* ----- Gelen arama ----- */
+function gCall(def,evid){
+ var d=document.createElement('div');d.id='call';
+ d.innerHTML='<div class="callcard ringing" id="cc"><div class="av">'+(def.av||'👤')+'</div><h3>'+esc(def.name)+'</h3><small>'+esc(def.num)+' · Gelen arama…</small><div class="cbtns"><div><button id="cno" style="background:#e53935">📵</button><small>Reddet</small></div><div><button id="cyes" style="background:#2e7d32">📞</button><small>Yanıtla</small></div></div></div>';
+ document.body.appendChild(d);SFX.ring();ringIv=setInterval(SFX.ring,1800);
+ function fin(){clearInterval(ringIv);clearTimeout(miss);if(def.after)setTimeout(function(){if(!S||S.done)return;var dd=gDef(def.after),th=gThread(dd);save();refresh('phone');icons();toast((dd.av||'📱')+' '+dd.name,th.msgs[th.msgs.length-1].t.slice(0,90))},3500)}
+ var miss=setTimeout(function(){fin();d.remove();toast('📞 Cevapsız arama',esc(def.num));gEff(def.miss)},20000);
+ $('cno').onclick=function(){fin();d.remove();gEff(def.reject||{toast:['📵 Arama reddedildi','Tanımadığın numaraları yanıtlamamak iyi bir alışkanlık.']})};
+ $('cyes').onclick=function(){clearInterval(ringIv);clearTimeout(miss);$('cc').classList.remove('ringing');
+  $('cc').innerHTML='<div class="av">'+(def.av||'👤')+'</div><h3>'+esc(def.name)+'</h3><small id="ctime">00:00</small><div class="lines" id="cl"></div><div class="copts" id="co"></div>';
+  var st=Date.now(),ti=setInterval(function(){var x=$('ctime');if(!x)return clearInterval(ti);x.textContent='00:'+String(Math.floor((Date.now()-st)/1000)).padStart(2,'0')},1000);
+  var i=0;(function nxt(){if(!$('cl'))return;if(i<def.lines.length){$('cl').insertAdjacentHTML('beforeend','<div>“'+def.lines[i]+'”</div>');say(def.lines[i]);i++;setTimeout(nxt,1700)}else opts()})();
+  function opts(){
+   var O=shuf(def.opts.map(function(o,j){return j}));
+   $('co').innerHTML=O.map(function(j){return '<button data-o="'+j+'">'+def.opts[j].t+'</button>'}).join('');
+   qa('#co button').forEach(function(bt){bt.onclick=function(){var o=def.opts[+bt.dataset.o];hush();clearInterval(ti);d.remove();fin();gEff(o.eff)}});
+  }
+ };
+}
+
+/* ----- Zaman ----- */
+function gTick(l){
+ var g=GS(),c=$('count'),e=elapsed();
+ c.textContent='⏱ '+fmt(l);c.className='count'+(l<120?' low':'');
+ if(l<=0&&!S.sent){S.sent=true;save();toast('⏰ Süre doldu',g.timeout,'bad')}
+ (g.events||[]).forEach(function(ev,i){
+  var id=ev.id||('e'+i);if(S.events[id]||e<ev.at||S.done)return;
+  if(ev.type==='call'){if(busy())return;S.events[id]=1;save();gCall(ev.call,id);return}
+  S.events[id]=1;save();
+  if(ev.type==='thread'){var d=gDef(ev.k),th=gThread(d);save();refresh('phone');icons();toast((d.av||'📱')+' '+d.name,th.msgs[th.msgs.length-1].t.slice(0,90))}
+  else if(ev.type==='mail'){S.g.extra.push(ev.i);save();refresh('mail');icons();toast('📧 Yeni e-posta',g.emails[ev.i].from+': '+g.emails[ev.i].subj)}
+  else if(ev.type==='toast')toast(ev.title,ev.text,ev.kind);
+ });
+ if(!S.done&&l>0&&l<=60)SFX.tick();
+}
+
+/* ----- Rapor ve sıralama ----- */
+var SKEY='hh-skorlar';
+function scores(){try{return JSON.parse(localStorage.getItem(SKEY)||'[]')}catch(e){return []}}
+function recordScore(){
+ if(S.recorded)return;S.recorded=1;save();
+ var l=Math.round(left()),a=scores();
+ a.push({team:S.team,sc:S.sc,diff:S.diff||'normal',left:l,wrong:S.wrong,hints:S.hintsUsed,bonus:S.bonus||0,at:new Date().toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})});
+ try{localStorage.setItem(SKEY,JSON.stringify(a.slice(-200)))}catch(e){}
+}
+function scTitle(k){return (STORY[k]&&STORY[k].name)||k}
+var DIFFN={kolay:'Kolay',normal:'Normal',zor:'Zor'};
+function boardHTML(sc){
+ var a=scores().filter(function(x){return !sc||x.sc===sc}).sort(function(x,y){return y.left-x.left||x.wrong-y.wrong}).slice(0,10);
+ if(!a.length)return '<p style="color:var(--muted)">Henüz kayıtlı oyun yok.</p>';
+ return '<table class="board"><tr><th>#</th><th>Takım</th>'+(sc?'':'<th>Senaryo</th>')+'<th>Zorluk</th><th>Kalan</th><th>Hata</th><th>İpucu</th></tr>'+a.map(function(x,i){return '<tr'+(S&&x.team===S.team&&x.sc===S.sc?' class="me"':'')+'><td>'+(i+1)+'</td><td>'+esc(x.team)+'</td>'+(sc?'':'<td>'+esc(scTitle(x.sc))+'</td>')+'<td>'+DIFFN[x.diff]+'</td><td>'+(x.left>=0?fmt(x.left):'<span style="color:var(--red)">'+fmt(x.left)+'</span>')+'</td><td>'+x.wrong+'</td><td>'+x.hints+'</td></tr>'}).join('')+'</table><p style="font-size:12px;color:var(--muted)">Sıralama bu cihazda tutulur.</p>';
+}
+function endExtras(){return '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn gray" id="rpBtn" style="flex:1">📋 Öğretmen raporu</button><button class="btn gray" id="lbBtn" style="flex:1">🏆 Sıralama</button></div>'}
+function bindEndExtras(){
+ recordScore();
+ $('rpBtn').onclick=function(){
+  var L=S.log||[],bad=L.filter(function(x){return x.k==='bad'});
+  $('screen').innerHTML='<div class="sbox2"><h2 style="margin-top:0">📋 Öğretmen raporu</h2><p style="color:var(--muted);margin-top:0">'+esc(S.team)+' · '+esc(scTitle(S.sc))+' · '+DIFFN[S.diff||'normal']+'</p>'+
+  '<div class="stats"><div class="stat">Yanlış hamle<b>'+S.wrong+'</b></div><div class="stat">İpucu<b>'+S.hintsUsed+'</b></div><div class="stat">Bonus<b>+'+(S.bonus||0)+' sn</b></div></div>'+
+  (bad.length?'<b>Düşülen tuzaklar</b><div class="learn">'+bad.map(function(x){return '<div><b>'+esc(x.a)+'</b><br><small>'+esc(x.b)+'</small></div>'}).join('')+'</div>':'<div class="note good">Hiç tuzağa düşülmedi! 👏</div>')+
+  '<b style="display:block;margin-top:12px">Zaman çizelgesi</b><div class="tl">'+L.map(function(x){return '<div class="'+x.k+'"><span>'+fmt(x.t)+'</span>'+({task:'✅ ',hint:'💡 '}[x.k]||'')+esc(x.a)+'</div>'}).join('')+'</div>'+
+  '<button class="btn gray" id="rpBack" style="width:100%;margin-top:12px">← Geri</button></div>';
+  $('rpBack').onclick=showEnd;
+ };
+ $('lbBtn').onclick=function(){
+  $('screen').innerHTML='<div class="sbox2"><h2 style="margin-top:0">🏆 Sıralama · '+esc(scTitle(S.sc))+'</h2>'+boardHTML(S.sc)+'<button class="btn gray" id="lbBack" style="width:100%;margin-top:12px">← Geri</button></div>';
+  $('lbBack').onclick=showEnd;
+ };
+}
+function showEndG(l,n){
+ var g=GS();
+ $('screen').innerHTML='<div class="sbox2"><div style="font-size:50px">'+(S.sent?'⏰':g.winIc)+'</div><h1>'+(S.sent?g.lateTitle:g.winTitle)+'</h1><p>'+esc(S.team)+(S.sent?g.lateText:g.winText)+'</p>'+
+ '<div class="stats"><div class="stat">'+(l>=0?'Kalan süre':'Aşım')+'<b>'+fmt(Math.abs(l))+'</b></div><div class="stat">Bonus<b>+'+(S.bonus||0)+' sn</b></div><div class="stat">İpucu<b>'+S.hintsUsed+'</b></div><div class="stat">Yanlış hamle<b>'+S.wrong+'</b></div><div class="stat">Görev<b>'+n+'/'+objs().length+'</b></div></div>'+
+ '<b>Bugün öğrendiklerimiz</b><div class="learn">'+g.learn.map(function(x){return '<div>'+x+'</div>'}).join('')+'</div>'+endExtras()+
+ '<button class="btn green" id="again" style="width:100%;margin-top:10px">Yeni takımla tekrar oyna</button></div>';
+ $('screen').classList.remove('hidden');
+ if(!S.sent&&!S.celebrated){S.celebrated=1;save();SFX.win();confetti()}
+ $('again').onclick=resetGame;bindEndExtras();
+}
+
+/* =================== YENİ SENARYOLAR =================== */
+var GSC={};
+
+/* ---------- 1. Sahte Çekiliş ---------- */
+GSC.cekilis={
+ role:'Ece',mailAddr:'ece.y@yildizkoleji.k12.tr',goal:'Tuzağı yakala',winIc:'🎁',
+ apps:['phone','mail','browser','tasks','note'],first:['phone','tasks'],
+ note:'📌 <b>Yapılacaklar</b><br>📚 Matematik ödevi<br>🎂 Zeynep\'e doğum günü hediyesi<br>⭐ Takip ettiğim mağaza: @hediyedunyasi.official',
+ searchHint:'“hediye dünyası çekiliş” gibi arama yapabilirsin.',
+ anim:['📩 @hediye.dunyasi_tr: TEBRİKLER! iPhone 16 KAZANDIN 🎉','⏰ Ödülünü 24 saat içinde al!','💳 Sadece kargo ücreti: 49,90 TL…'],big:'GERÇEK Mİ, TUZAK MI? 🎁',
+ timeout:'Sahte hesap aynı mesajı 500 kişiye daha gönderdi. Yine de görevlere devam edebilirsin!',
+ winTitle:'TUZAK <span style="color:var(--green)">YAKALANDI!</span>',winText:' takımı sahte çekilişi fark etti; arkadaşını ve ailesini korudu!',
+ lateTitle:'Tuzak yakalandı… ama geç',lateText:' takımı tuzağı yakaladı ama bu arada mesaj yüzlerce kişiye ulaşmıştı.',
+ tasks:[
+  {id:'check',t:'Çekilişin gerçek olup olmadığını araştır',s:'Gezgin\'de ara; markanın resmî sitesine bak',h:['Gezgin\'de “hediye dünyası çekiliş” diye ara. En üstteki “Sponsorlu” sonuca dikkat!','Mağazanın resmî sitesi hediyedunyasi.com.tr; orada sahte çekiliş uyarısı var.']},
+  {id:'report',t:'Sahte hesabı şikâyet et ve engelle',s:'Telefon → @hediye.dunyasi_tr',h:['DM\'ye yanıt verme; hesabı şikâyet edip engellemek doğru tepki.','Telefon → @hediye.dunyasi_tr sohbetinde “Hesabı şikâyet edip engellerim” seçeneği.']},
+  {id:'spam',t:'Sahte e-postayı spam olarak bildir',s:'Posta',h:['Posta\'da “Son 2 saat” diye acele ettiren e-postayı bul.','E-postayı aç ve ⚠️ Spam bildir\'e bas. Mağazanın gerçek bülteni spam değil!']},
+  {id:'friends',t:'Arkadaşını uyar',s:'Telefon → 7-A Kızlar (biraz sonra yazacaklar)',h:['Arkadaşın kart bilgisini girmiş olabilir.','Ona ailesine hemen söylemesini ve kartın kapatılması gerektiğini yaz.']},
+  {id:'parent',t:'Ailene haber ver',s:'Telefon → Annem',h:['Annene ne olduğunu anlat.','“Hiçbir bilgi vermedim, sana göstermek istiyorum” yanıtını seç.']}
+ ],
+ threads:[
+  {k:'hd',name:'@hediye.dunyasi_tr',av:'🎁',msgs:['🎉 TEBRİKLER Ece! Takipçilerimiz arasında yapılan çekilişte iPhone 16 KAZANDIN!','Ödülünü almak için 24 saat içinde şu sayfadan bilgilerini gir, sadece kargo ücretini öde: hediye-dunyasi-tr.com/odul'],quick:[
+   {t:'Linke tıklayıp ödülümü alırım 🎉',ok:0,go:'hediye-dunyasi-tr.com/odul',bt:'⚠️ Doğrulamadan linke gittin',why:'Önce çekilişin gerçek olup olmadığını araştırmalısın. Sahte sayfalar bilgi çalmak için kurulur.',re:'Acele et! Sadece 3 ödül kaldı ⏰'},
+   {t:'(Yanıt vermem. Hesabı şikâyet edip engellerim.)',ok:1,task:'report',block:1,re:null},
+   {t:'Kargo ücretini annemin kartıyla öderim',ok:-1,bt:'🚨 Kart bilgisi istendi!',why:'Gerçek çekilişler kazanandan para istemez. “Sadece kargo ücreti” en bilinen tuzaktır.',re:'Harika! Kart numarasını, son kullanma tarihini ve arkasındaki 3 haneyi yaz 🙏'}]},
+  {k:'anne',name:'Annem ❤️',av:'👩',msgs:['Okuldan çıkınca haber ver tatlım 😘'],quick:[
+   {t:'Anne, sahte bir çekiliş mesajı geldi. Hiçbir bilgi vermedim, sana göstermek istiyorum.',ok:1,task:'parent',re:['Aferin kızım, çok doğru yapmışsın! 👏','Akşam birlikte bakalım. Kart bilgisi isteyen her şey şüphelidir.']},
+   {t:'Anne kartının numarasını yazar mısın? Acil bir şey alacağım.',ok:-1,bt:'🚨 Kart bilgisi isteme',why:'Kart bilgisi mesajla istenmez ve gönderilmez. Annene ne olduğunu anlatmalıydın.',re:'Ne alacaksın? Akşam konuşalım 🤔'}]},
+  {k:'grup',later:1,name:'7-A Kızlar 💜',av:'💜',msgs:['Duru: Kızlar bana da iPhone çıktı!! 😍','Duru: Sayfaya kart bilgilerini girdim galiba 😰 sorun olur mu?'],quick:[
+   {t:'O çekiliş sahte! Hemen ailene söyle, banka kartı kapatılsın.',ok:1,task:'friends',re:['Duru: Ciddi misin 😱 Hemen annemi arıyorum!','Defne: İyi ki yazdın, ben de girecektim!']},
+   {t:'Sorun olmaz bence, kargo gelir 😄',ok:-1,bt:'💔 Arkadaşın uyarılmadı',why:'Duru kart bilgilerini dolandırıcıya verdi. Hemen ailesine söylemesi ve kartı kapattırması gerekiyordu.',re:'Duru: Oh iyi 😅'},
+   {t:'Linki bana da atar mısın?',ok:0,bt:'⚠️ Riskli yanıt',why:'Sahte linki dolaştırmak başkalarını da tehlikeye atar.',re:'Duru: Attım 👍'}]}
+ ],
+ mails:[
+  {from:'Okul Kütüphanesi',addr:'kutuphane@yildizkoleji.k12.tr',col:'#14924a',subj:'Kitap iade hatırlatması',time:'Dün 10:00',re:{from:'Okul Kütüphanesi',addr:'kutuphane@yildizkoleji.k12.tr',col:'#14924a',subj:'Ynt: Kitap iade hatırlatması',time:'Şimdi',body:'<p>Teşekkürler Ece, cuma günü bekliyoruz! 📚</p>'},body:'<p>Merhaba Ece,</p><p>“Küçük Prens” kitabının iade tarihi cuma günüdür.</p><p>Okul Kütüphanesi</p>'},
+  {from:'Hediye Dünyası',addr:{kolay:'odul@bedava-iphone-kazan.xyz',normal:'kazanan@hediye-dunyasi-tr.com',zor:'kazanan@hediyedunyasi.com.tr-odul.net'},col:'#d93636',subj:'⏰ Son 2 saat! iPhone 16 ödülünüz iptal edilecek',time:'Bugün 08:30',trap:1,task:'spam',trapRe:{from:'Hediye Dünyası',addr:'kazanan@hediye-dunyasi-tr.com',col:'#d93636',subj:'Ynt: Ödülünüz',time:'Şimdi',trap:1,body:'<p>Yanıtınız için teşekkürler! Ödülünüzü göndermek için <b>kart numaranızı ve CVV kodunuzu</b> bu e-postaya yazınız.</p>'},body:'<p>Sevgili kazananımız,</p><p>Ödülünüzü <b>2 saat içinde</b> almazsanız başka bir takipçiye verilecektir. Sadece <b>49,90 TL kargo ücreti</b> ödemeniz yeterli.</p><p><span class="mbutton" data-go="hediye-dunyasi-tr.com/odul">Ödülümü al</span></p>'},
+  {from:'Hediye Dünyası',addr:'bulten@hediyedunyasi.com.tr',col:'#c77700',subj:'Kasım indirimleri başladı',time:'Dün 18:00',noreply:1,body:'<p>Merhaba,</p><p>Kasım indirimleri mağazalarımızda!</p><p><b>Önemli:</b> Çekilişlerimizi yalnızca resmî hesabımız <b>@hediyedunyasi.official</b> üzerinden duyururuz ve kazananlardan <b>asla ücret istemeyiz</b>.</p>'}
+ ],
+ emails:[],
+ sites:{
+  'hediye-dunyasi-tr.com':{secure:false,head:'🎁 Hediye Dünyası <small>· Çekiliş</small>',blocks:[{img:'📱',bg:'#ffe3ec'},{h:'Tebrikler! iPhone 16 kazandınız!'},{warn:'Ödülünüz 09:59 dakika içinde iptal edilecek!'},{form:{fields:['Ad Soyad','Adres','Kart numarası','Son kullanma tarihi','CVV (kartın arkasındaki 3 hane)'],btn:'49,90 TL öde ve ödülü al',after:'🎣 Oltaya takıldın! Bu sayfa mağazanın değil, dolandırıcıların sitesiydi. Hemen ailene haber verip kartı kapattırmalısın.',eff:{pen:[60,'🚨 Kart bilgilerin dolandırıcıya gitti!','Gerçek çekilişler kazanandan para istemez. Ailene hemen haber verip kartı kapattırmalısın.']}}}]},
+  'hediyedunyasi.com.tr':{secure:true,head:'🎁 Hediye Dünyası <small>· Resmî site</small>',blocks:[{visit:'check'},{h:'⚠️ Sahte çekiliş uyarısı'},{p:'Adımızı kullanan sahte hesaplar “iPhone kazandınız” mesajları gönderiyor.'},{p:'Çekilişlerimizi yalnızca <b>@hediyedunyasi.official</b> hesabından duyururuz. Kazananlardan <b>kargo ücreti, kart bilgisi ya da şifre asla istemeyiz</b>.'},{p:'Şüpheli hesapları profilinden şikâyet edebilir ve engelleyebilirsiniz.'}]},
+  'sikayet-merkezi.com':{secure:true,head:'📣 Şikâyet Merkezi',blocks:[{h:'“iPhone kazandınız” mesajı sahte çıktı'},{p:'“Kargo ücreti için 49,90 TL ödedim, sonra kartımdan 3.000 TL çekildi.” <small>— Kullanıcı yorumu</small>'},{p:'“Bana da aynı mesaj geldi, hesabın takipçileri bot.” <small>— Kullanıcı yorumu</small>'},{link:{t:'Mağazanın resmî sitesine git →',go:'hediyedunyasi.com.tr'}}]}
+ },
+ search:[
+  {ad:1,url:'hediye-dunyasi-tr.com/odul',title:'Hediye Dünyası Çekiliş – Ödülünü Hemen Al!',d:'iPhone 16 kazananlar listesi. Ödülünüzü kargo ücreti ödeyerek hemen alın.'},
+  {url:'hediyedunyasi.com.tr',title:'Hediye Dünyası – Resmî Site',d:'Mağazalarımız, kampanyalar ve sahte çekiliş uyarısı.'},
+  {url:'sikayet-merkezi.com/hediye',title:'“Hediye Dünyası çekilişi sahte mi?” – Şikâyet Merkezi',d:'Yüzlerce kişi kargo ücreti ödedi, ödül gelmedi…'}
+ ],
+ events:[
+  {at:70,type:'thread',k:'grup'},
+  {at:130,type:'call',id:'kargo',call:{name:'Hızlı Kargo',num:'0 850 222 19 19',av:'📦',lines:['Merhaba, Ece Hanım mı? Hızlı Kargo\'dan arıyorum.','Kazandığınız telefon şubemizde. Teslimat için telefonunuza gelen 6 haneli kodu söyler misiniz?'],opts:[
+   {t:'“Tabii, kod şu…”',eff:{pen:[60,'🚨 Kodu dolandırıcıya verdin','O kod bir hesabına giriş kodu olabilir. Kargo firmaları telefonda kod istemez.']}},
+   {t:'Telefonu kapatırım; böyle bir kargo beklemiyorum.',eff:{bonus:[30,'👏 Doğru karar!','Beklemediğin bir kargo için kod isteyen arama dolandırıcılıktır.']}},
+   {t:'“Ev adresimi söyleyeyim, oraya getirin.”',eff:{pen:[30,'⚠️ Kişisel bilgi verdin','Tanımadığın birine ev adresini söylemek risklidir.']}}]}}
+ ],
+ learn:['🎁 Katılmadığın çekilişi kazanamazsın; gerçek çekilişler ücret istemez.','🔍 Markanın resmî sitesine ve hesabına bak; “Sponsorlu” sonuçlara dikkat et.','💳 Kart bilgisi, CVV ve SMS kodu kimseyle paylaşılmaz.','🚩 Sahte hesabı şikâyet et ve engelle; sahte e-postayı spam olarak bildir.','💜 Arkadaşlarını uyar, ailene mutlaka haber ver.']
+};
+
+/* ---------- 2. Bedava Elmas ---------- */
+GSC.oyun={
+ role:'Can',mailAddr:'can_blok@eposta.com',goal:'Hesabını koru',winIc:'💎',
+ apps:['phone','browser','mail','tasks','note'],first:['phone','tasks'],
+ note:'📌 <b>BlokDünya</b><br>Kullanıcı adı: can_blok<br>Şifre: Kirpi-Zipla42!<br>(Kimseye söyleme!)',
+ searchHint:'“blokdünya bedava elmas” gibi arama yapabilirsin.',
+ anim:['💬 Emre: Kanka bedava 10.000 elmas veriyorlar 😎','🔗 elmas-bedava.net','👾 xX_ProGamer_Xx: Hesabını ver, seviyeni atlatayım…'],big:'BEDAVA MI, TUZAK MI? 💎',
+ timeout:'Emre\'nin çalınan hesabından tüm sınıfa sahte link gönderildi. Yine de devam edebilirsin!',
+ winTitle:'HESAP <span style="color:var(--green)">GÜVENDE!</span>',winText:' takımı bedava elmas tuzağına düşmedi, arkadaşını uyardı ve hesabını korudu!',
+ lateTitle:'Hesap güvende… ama geç',lateText:' takımı hesabını korudu ama sahte link sınıfta çoktan yayılmıştı.',
+ tasks:[
+  {id:'check',t:'Bedava elmasın gerçek olup olmadığını araştır',s:'Gezgin → oyunun resmî destek sayfası',h:['Gezgin\'de “blokdünya bedava elmas” diye ara. “Sponsorlu” sonuca dikkat!','Resmî destek sayfası blokdunya.com/destek adresinde.']},
+  {id:'helpfriend',t:'Emre\'yi uyar',s:'Telefon → Emre',h:['Emre şifresini sahte siteye yazmış.','Ona hemen şifresini değiştirmesini söyle.']},
+  {id:'nogive',t:'Hesabını kimseye verme',s:'Telefon → BlokDünya oyuncusu (biraz sonra yazacak)',h:['“Seviye atlatırım” diyen oyuncu hesabını istiyor.','Vermeden oyuncuyu şikâyet edip engelle.']},
+  {id:'spam',t:'Sahte ödül e-postasını spam olarak bildir',s:'Posta',h:['“50.000 elmas hediyen” diyen e-postanın adresine bak.','E-postayı aç ve ⚠️ Spam bildir\'e bas. Turnuva duyurusu gerçek!']},
+  {id:'twofa',t:'Hesabına iki aşamalı doğrulama ekle',s:'blokdunya.com/hesap · Şifre notta',h:['Gezgin\'de blokdunya.com/hesap adresine git; şifre masaüstündeki 📌 Not\'ta.','Doğrulama kodu telefona gelir. Kodu kimseyle paylaşma; “destek ekibi” bile istese!']}
+ ],
+ threads:[
+  {k:'emre',name:'Emre 🎮',av:'🎮',msgs:['Kanka şu siteye gir, bedava 10.000 elmas veriyor 😎 elmas-bedava.net','Ben girdim, kullanıcı adımı ve şifremi yazdım, elmaslar 1 saat içinde geliyormuş'],quick:[
+   {t:'Emre o site sahte! Hemen şifreni değiştir; aynı şifreyi başka yerde de kullanıyorsan onları da.',ok:1,task:'helpfriend',re:['Ciddi mi?! 😱','Hesabıma giremiyorum zaten… şifrem değişmiş 😭 Annemle destek sayfasından kurtarmaya çalışacağım.']},
+   {t:'Süper, ben de giriyorum! 🤑',ok:0,go:'elmas-bedava.net',bt:'⚠️ Bedava elmas sitesine gittin',why:'“Bedava oyun parası” siteleri hesap çalmak için kurulur.',re:'Hadi hadi! 😎'},
+   {t:'Kanka şifreni bana da söylesene, ben de deneyeyim',ok:-1,bt:'🚨 Şifre istemek de yanlış',why:'Arkadaşın bile olsa şifre paylaşılmaz; ayrıca Emre\'yi uyarman gerekiyordu.',re:'Al: emre2013 😅'}]},
+  {k:'pro',later:1,name:'BlokDünya • xX_ProGamer_Xx',av:'👾',msgs:['Selam! Seviyen çok düşük 😂 Hesabını bana ver, 1 saatte 50. seviyeye çıkarayım. Ücretsiz!','Sadece kullanıcı adın ve şifren yeterli 😉'],quick:[
+   {t:'Tabii, şifrem: …',ok:-1,bt:'🚨 Hesabını yabancıya verdin',why:'Hesabını veren her şeyini kaybeder. “Seviye atlatma” bir hesap çalma yöntemidir.',re:'Teşekkürler 😈'},
+   {t:'(Vermem. Oyuncuyu oyun içinden şikâyet eder ve engellerim.)',ok:1,task:'nogive',block:1,re:null},
+   {t:'Önce sen bana elmas gönder, sonra veririm',ok:0,bt:'⚠️ Pazarlığa girme',why:'Dolandırıcıyla pazarlık etmek bile risklidir. Yanıt verme, şikâyet et.',re:'Tamam tamam, önce şifre 😉'}]},
+  {k:'destek',later:1,name:'BlokDünya Destek ✔',av:'🛟',msgs:['Merhaba Can! Hesabını güvene almak için telefonuna az önce gelen 6 haneli kodu bize yazar mısın? 🙏'],quick:[
+   {t:'(Kodu yazar, gönderirim)',ok:-1,undo:'twofa',bt:'🚨 Kodu dolandırıcıya verdin!',why:'Gerçek destek ekibi kodunu asla istemez. Doğrulamayı yeniden açman gerekiyor.',re:'Teşekkürler 😉'},
+   {t:'(Yanıt vermem. Destek ekibi kimseden kod istemez; hesabı şikâyet ederim.)',ok:1,block:1,gt:'👏 Doğru!',gm:'Doğrulama kodu yalnızca sana özeldir.',re:null}]}
+ ],
+ mails:[
+  {from:'BlokDünya',addr:'no-reply@blokdunya.com',col:'#14924a',subj:'Haftalık turnuva başlıyor!',time:'Dün 17:00',noreply:1,body:'<p>Merhaba can_blok,</p><p>Bu hafta sonu takım turnuvası var. Bol şans! 🏆</p><p><small>BlokDünya ekibi asla şifreni ya da doğrulama kodunu sormaz.</small></p>'},
+  {from:'BlokDünya Ödül',addr:{kolay:'elmas@bedava-elmas-hediye.xyz',normal:'odul@blokdunya-elmas.com',zor:'odul@blokdunya.com.elmas-odul.net'},col:'#d93636',subj:'🎁 50.000 elmas hediyen seni bekliyor!',time:'Bugün 07:45',trap:1,task:'spam',body:'<p>Tebrikler can_blok!</p><p>Sadık oyuncumuz olduğun için <b>50.000 elmas</b> kazandın. Almak için <b>1 saat içinde</b> giriş yap.</p><p><span class="mbutton" data-go="elmas-bedava.net">Elmasları al</span></p>'},
+  {from:'Ablam',addr:'zeynep.k@eposta.com',col:'#7b4bc4',subj:'Akşam film?',time:'Dün 20:10',re:{from:'Ablam',addr:'zeynep.k@eposta.com',col:'#7b4bc4',subj:'Ynt: Akşam film?',time:'Şimdi',body:'<p>Tamamdır, patlamış mısırı ben yaparım 🍿</p>'},body:'<p>Akşam film izleyelim mi? Sen seç 😊</p>'}
+ ],
+ emails:[],
+ sites:{
+  'elmas-bedava.net':{secure:false,head:'💎 ELMAS JENERATÖRÜ 2026',blocks:[{img:'💎',bg:'#e3f0ff'},{h:'BEDAVA 10.000 ELMAS!'},{warn:'Bugün sadece 12 kişilik yer kaldı!'},{form:{fields:['BlokDünya kullanıcı adı','BlokDünya şifresi'],btn:'Elmasları gönder',after:'🎣 Oltaya takıldın! Bu site elmas vermez, şifreni çalar. blokdunya.com/hesap adresinden şifreni değiştir ve iki aşamalı doğrulamayı aç.',eff:{pen:[60,'🚨 Hesap bilgilerin çalındı!','“Elmas jeneratörü” diye bir şey yoktur. Bu siteler şifreni çalar.']}}},{p:'<small>✅ 2.345.981 oyuncu elmasını aldı!</small>'}]},
+  'blokdunya.com/destek':{secure:true,head:'🟩 BlokDünya <small>· Destek</small>',blocks:[{visit:'check'},{h:'Bedava elmas siteleri hakkında'},{p:'Elmaslar <b>yalnızca oyun içindeki mağazadan</b> alınır. “Bedava elmas”, “elmas jeneratörü” ya da “seviye atlatma” vaat eden siteler ve oyuncular hesabını çalmak ister.'},{p:'Ekibimiz <b>şifreni ya da doğrulama kodunu asla sormaz</b>. Hesabını korumak için iki aşamalı doğrulamayı aç.'},{link:{t:'Hesabıma git →',go:'blokdunya.com/hesap'}}]},
+  'blokdunya.com':{secure:true,head:'🟩 BlokDünya',blocks:[{h:'BlokDünya\'ya hoş geldin!'},{p:'Yeni sezon başladı. Turnuvalara katıl, arkadaşlarınla inşa et!'},{link:{t:'Destek →',go:'blokdunya.com/destek'}},{link:{t:'Hesabım →',go:'blokdunya.com/hesap'}}]},
+  'blokdunya.com/hesap':{secure:true,head:'🟩 BlokDünya <small>· Hesabım</small>',blocks:[{login:{key:'blok',u:'can_blok',pw:'Kirpi-Zipla42!'}},{h:'Hesap güvenliği'},{p:'Son giriş: Bugün 08:12 · Bu cihaz'},{twofa:{key:'blok',task:'twofa',name:'BLOKDUNYA',scam:'destek'}}]}
+ },
+ search:[
+  {ad:1,url:'elmas-bedava.net',title:'BlokDünya BEDAVA ELMAS 2026 – %100 Çalışıyor',d:'Kullanıcı adını gir, 10.000 elmas anında hesabında!'},
+  {url:'blokdunya.com/destek',title:'BlokDünya Destek – Bedava elmas siteleri hakkında',d:'Resmî açıklama: Elmaslar yalnızca oyun içinden alınır.'},
+  {url:'blokdunya.com',title:'BlokDünya – Resmî site',d:'Hesabını yönet, güvenlik ayarları.'}
+ ],
+ events:[{at:60,type:'thread',k:'pro'}],
+ learn:['💎 “Bedava oyun parası” siteleri hesap çalar; oyun parası yalnızca oyun içinden alınır.','🔑 Şifreni arkadaşınla bile paylaşma, hesabını kimseye verme.','🔍 Oyunun resmî destek sayfasına bak; “Sponsorlu” sonuçlara dikkat et.','📲 İki aşamalı doğrulamayı aç; kodu kimse istemez, destek ekibi bile.','🚩 Şüpheli oyuncuları şikâyet et ve engelle; arkadaşlarını uyar.']
+};
+
+/* ---------- 3. Sahte Haber ---------- */
+GSC.haber={
+ role:'Zeynep',mailAddr:'zeynep.a@yildizkoleji.k12.tr',goal:'Doğruyu bul',winIc:'📰',
+ apps:['phone','browser','mail','tasks','note'],first:['phone','tasks'],
+ note:'📌 <b>Yarın</b><br>📝 Fen ödevi teslim!<br>⚽ Okul maçı 15.00<br>Güvendiğim kaynaklar: meb.gov.tr, okulun sitesi',
+ searchHint:'“yarın okullar tatil mi” diye arayabilirsin.',
+ anim:['📱 8-B Sınıf: 🚨 SON DAKİKA','📰 “Yarın tüm okullar TATİL!”','🔁 Paylaşım: 1.250… 4.800… 12.000…'],big:'DOĞRU MU, YALAN MI? 📰',
+ timeout:'Sahte haber 3 okula daha yayıldı, birçok öğrenci ödevini yapmadı. Yine de devam edebilirsin!',
+ winTitle:'SAHTE HABER <span style="color:var(--green)">DURDURULDU!</span>',winText:' takımı haberin kaynağını ve tarihini kontrol etti, sınıfına doğrusunu anlattı!',
+ lateTitle:'Durduruldu… ama geç',lateText:' takımı doğruyu buldu ama haber çoktan yayılmıştı.',
+ tasks:[
+  {id:'stop',t:'Haberin yayılmasını durdur',s:'Telefon → 8-B Sınıf',h:['Haberi paylaşma; önce kontrol etmeyi öner.','“Durun, önce kaynağına bakalım” yanıtını seç.']},
+  {id:'source',t:'Resmî kaynağı kontrol et',s:'Gezgin → resmî duyurular',h:['Gezgin\'de “yarın okullar tatil mi” diye ara.','Bakanlığın resmî sitesindeki duyurulara bak (meb.gov.tr). Tatil kararlarını valilikler duyurur.']},
+  {id:'correct',t:'Gruba doğrusunu yaz',s:'Telefon → 8-B Sınıf (kaynağı kontrol ettikten sonra)',h:['Ekran görüntüsündeki tarihe dikkat et!','Resmî kaynağı kontrol ettikten sonra gruba haberin eski olduğunu yaz.']},
+  {id:'spam',t:'Sahte haber e-postasını spam olarak bildir',s:'Posta',h:['“ŞOK! Hemen paylaş” diyen e-postayı bul.','Okul müdürlüğünün e-postası gerçek; spam olan diğeri.']}
+ ],
+ threads:[
+  {k:'grup',name:'8-B Sınıf 📚',av:'📚',msgs:['Mert: 🚨🚨 SON DAKİKA','Mert: [📷 Ekran görüntüsü] “MEB AÇIKLADI: Yarın tüm okullar kar nedeniyle TATİL!” — HaberSonDakika24 · 12 Ocak 2023','Mert: herkes yaysın!! 🎉🎉','Selin: yaşasın!!! ödevi yapmıyorum o zaman 😂'],quick:[
+   {t:'Durun, önce kaynağına bakalım. Resmî bir açıklama var mı?',ok:1,task:'stop',re:['Mert: ya ne gerek var, herkes paylaşıyor 🙄','Selin: haklı ama, bakalım bir'],then:[
+    {t:'Ekran görüntüsündeki tarih 2023! Eski bir haber. Bakanlığın sitesinde yarın için tatil duyurusu yok.',ok:1,task:'correct',need:'source',needMsg:'Bunu yazmadan önce resmî kaynağı kontrol et (Gezgin).',re:['Selin: aaa gerçekten 2023 yazıyor 😅','Mert: tamam sildim… ödevi yapalım o zaman 😩']},
+    {t:'Bence de gerçek, yayalım!',ok:-1,bt:'🚨 Sahte haberi yaydın',why:'Kontrol etmeden paylaşmak sahte haberin yayılmasına yol açar.',re:'Mert: işte bu! 🎉'}]},
+   {t:'Yaşasın!! Hemen diğer gruplara da atıyorum 🎉',ok:-1,bt:'🚨 Sahte haberi yaydın',why:'Haberi doğrulamadan paylaşmak onu daha çok kişiye ulaştırır.',re:'Mert: süpersin 😎'},
+   {t:'🤣🤣',ok:0,bt:'⚠️ Doğrulamadan tepki verdin',why:'Önce haberin kaynağını ve tarihini kontrol etmelisin.',re:'Selin: 😂😂'}]},
+  {k:'mert',later:1,name:'Mert',av:'🧢',msgs:['Zeynep neden bozuyorsun havayı 😒 Kesin gerçek bak, binlerce kişi paylaşmış!'],quick:[
+   {t:'Çok paylaşılması doğru olduğunu göstermez. Haberin tarihi ve kaynağı önemli.',ok:1,gt:'👏 Doğru!',gm:'Bir haberin çok paylaşılması doğru olduğu anlamına gelmez.',re:'Hmm… haklısın aslında 🤔'},
+   {t:'Haklısın, binlerce kişi yanılmaz 😅',ok:0,bt:'⚠️ Kalabalığa uydun',why:'Bir haberin çok paylaşılması doğru olduğunu göstermez.',re:'Gördün mü 😎'}]}
+ ],
+ mails:[
+  {from:'Okul Müdürlüğü',addr:'mudurluk@yildizkoleji.k12.tr',col:'#123a6b',subj:'Yarınki ders programı',time:'Bugün 09:00',re:{from:'Okul Müdürlüğü',addr:'mudurluk@yildizkoleji.k12.tr',col:'#123a6b',subj:'Ynt: Yarınki ders programı',time:'Şimdi',body:'<p>Sevgili Zeynep, sahte haberi bize bildirdiğin için teşekkürler. Sınıflara duyuru yapacağız. 👏</p>'},body:'<p>Sevgili öğrencilerimiz,</p><p>Yarın dersler <b>normal saatinde</b> başlayacaktır. Hava durumuna bağlı tüm kararlar valiliğin ve okulumuzun resmî kanallarından duyurulur.</p><p>Okul Müdürlüğü</p>'},
+  {from:'Haber Bülteni 🔥',addr:{kolay:'sok@haberler-tikla-kazan.xyz',normal:'bulten@habersondakika-24.net',zor:'bulten@meb-gov-tr.haber24.net'},col:'#d93636',subj:'ŞOK! Yarın okullar tatil, hemen paylaş!',time:'Bugün 08:10',trap:1,task:'spam',body:'<p>Bu haberi herkes konuşuyor! <b>Hemen paylaş</b>, arkadaşların duysun! 🔥🔥</p><p><span class="mbutton" data-go="habersondakika-24.net/tatil">Haberi oku</span></p>'},
+  {from:'Fen Kulübü',addr:'fenkulubu@yildizkoleji.k12.tr',col:'#14924a',subj:'Cuma günü teleskop gözlemi 🔭',time:'Dün 14:20',body:'<p>Hava açık olursa cuma akşamı bahçede teleskop gözlemi yapacağız!</p>'}
+ ],
+ emails:[],
+ sites:{
+  'habersondakika-24.net':{secure:false,head:'📰 HaberSonDakika24 🔥',blocks:[{warn:'ŞOK! ŞOK! ŞOK!'},{h:'YARIN TÜM OKULLAR TATİL!!! MEB AÇIKLADI'},{p:'<small>Yayın tarihi: <b>12 Ocak 2023</b> · Yazar: belirtilmemiş · Kaynak: belirtilmemiş</small>'},{p:'Yoğun kar yağışı nedeniyle tüm okullar yarın tatil edildi!!! Detaylar için reklamı geç…'},{p:'<span class="gad">🎰 KAZAN! Tıkla, iPhone senin!</span> <span class="gad">💊 Mucize zayıflama!</span>'},{btns:[{t:'🔍 Bu sayfada neler şüpheli?',cls:'gray',eff:{toast:['🔍 İpuçları','Tarih 2023, yazar ve kaynak yok, sayfa reklam dolu, büyük harflerle “ŞOK” diye bağırıyor. Resmî kaynağa bakmalısın.']}},{t:'📤 Haberi paylaş',cls:'red',eff:{pen:[30,'🚨 Sahte haberi paylaştın','Doğrulamadan paylaştığın haber daha çok kişiye ulaştı.']}}]}]},
+  'meb.gov.tr':{secure:true,head:'🏛 Millî Eğitim Bakanlığı <small>· Duyurular</small>',blocks:[{visit:'source'},{h:'Duyurular'},{p:'• 29.10.2026 — Cumhuriyet Bayramı kutlama mesajı<br>• 27.10.2026 — Ara tatil takvimi hakkında bilgilendirme<br>• 20.10.2026 — Ders kitapları dağıtımı'},{p:'ℹ️ Hava koşullarına bağlı tatil kararları <b>valilikler</b> tarafından resmî sitelerinde duyurulur. <b>Yarın için açıklanmış bir tatil kararı bulunmamaktadır.</b>'}]},
+  'dogrula-net.org':{secure:true,head:'✅ Doğrula.net',blocks:[{h:'İddia: “Yarın tüm okullar tatil”'},{p:'<b>Sonuç: YANLIŞ.</b> Paylaşılan ekran görüntüsü <b>12 Ocak 2023</b> tarihli eski bir habere ait.'},{p:'Nasıl anladık? Haberin tarihine, kaynağına ve resmî duyurulara baktık.'},{link:{t:'Resmî duyurulara git →',go:'meb.gov.tr/duyurular'}}]}
+ },
+ search:[
+  {url:'habersondakika-24.net/tatil',title:'YARIN OKULLAR TATİL Mİ? MEB AÇIKLADI!!! 🔥',d:'ŞOK GELİŞME! Tüm okullar tatil… · 12 Ocak 2023'},
+  {url:'meb.gov.tr/duyurular',title:'Millî Eğitim Bakanlığı – Duyurular',d:'Bakanlığın resmî duyuruları.'},
+  {url:'dogrula-net.org/kar-tatili',title:'Doğrulama: “Yarın tüm okullar tatil” iddiası',d:'Eski bir haberin ekran görüntüsü yeniden yayılıyor…'}
+ ],
+ events:[{at:90,type:'thread',k:'mert'}],
+ learn:['📅 Paylaşmadan önce haberin tarihine bak; eski haberler yeniden dolaşır.','🏛 Resmî kaynağı kontrol et: bakanlık, valilik, okul.','🔥 “ŞOK!”, “HEMEN PAYLAŞ” gibi ifadeler ve reklam dolu siteler şüphelidir.','👥 Çok paylaşılması doğru olduğunu göstermez.','✋ Doğrulamadan paylaşma; yanlışsa grubuna nazikçe doğrusunu yaz.']
+};
+
+/* ---------- 4. Annemin Sesi (ses taklidi) ---------- */
+GSC.ses={
+ role:'Ali',mailAddr:'ali.k@yildizkoleji.k12.tr',goal:'Sesi doğrula',winIc:'🎤',
+ apps:['phone','mail','browser','tasks','note'],first:['phone','tasks'],
+ note:'📌 <b>Rehberim</b><br>Annem: 0532 ••• 12 34<br>Babam: 0533 ••• 56 78<br>Babaannem: 0212 ••• 90 11',
+ searchHint:'“ses taklidi dolandırıcılığı” diye arayabilirsin.',
+ anim:['📞 Gelen arama: +90 553 781 44 02','🔊 “Ali! Benim, annen!”','💸 “Acil para lazım… babana söyleme…”'],big:'SES TANIDIK… AMA KİM? 🎤',
+ timeout:'Aynı dolandırıcı bu kez babaanneni aradı. Yine de devam edebilirsin!',
+ winTitle:'TUZAK <span style="color:var(--green)">BOZULDU!</span>',winText:' takımı tanıdık sese kanmadı; annesinden doğruladı, ailesini uyardı ve bir güvenlik kelimesi belirledi!',
+ lateTitle:'Tuzak bozuldu… ama geç',lateText:' takımı doğruyu buldu ama dolandırıcı aile büyüklerine ulaşmıştı.',
+ tasks:[
+  {id:'verify',t:'Şüpheli aramaya doğru tepki ver',s:'Gelen aramayı yanıtla ve dinle',h:['Arama birkaç saniye içinde gelecek. Ses tanıdık gelse bile para isteyen aramaya güvenme.','Telefonu kapatıp annemi kendi kayıtlı numarasından aramak doğru tepki.']},
+  {id:'callmom',t:'Annenden doğrula',s:'Telefon → Annem',h:['Gerçek annene, kayıtlı numarasından yaz.','“Az önce senin sesinle biri aradı, sen miydin?” diye sor.']},
+  {id:'block',t:'Sahte numarayı engelle',s:'Telefon → +90 553 …',h:['Arayan numara sana mesaj da atacak.','Yanıt verme; numarayı engelleyip şikâyet et.']},
+  {id:'word',t:'Aile güvenlik kelimesi belirle',s:'Telefon → Annem',h:['Annenle konuştuktan sonra bir önlem öner.','Aranızda sadece ailenin bildiği bir “güvenlik kelimesi” belirleyin.']},
+  {id:'warn',t:'Aile büyüklerini uyar',s:'Telefon → Aile grubu',h:['Bu dolandırıcılığın en sık hedefi büyükanne ve büyükbabalardır.','Aile grubuna “sesli arayıp para isteyen olursa önce kendi numarasından arayın” yaz.']},
+  {id:'spam',t:'Ses toplayan sahte e-postayı spam olarak bildir',s:'Posta',h:['Ses kaydı ve telefon numarası isteyen bir e-posta var.','O e-postayı aç ve ⚠️ Spam bildir\'e bas.']}
+ ],
+ threads:[
+  {k:'anne',name:'Annem ❤️',av:'👩',msgs:['Akşam yemeğe makarna yapıyorum 🍝'],quick:[
+   {t:'Anne, az önce senin sesinle biri aradı, para istedi. Sen miydin?',ok:1,task:'callmom',need:'ev:sahte',needMsg:'Önce gelen aramayı bekle; birkaç saniye içinde gelecek.',re:['HAYIR! Ben toplantıdayım, telefonum yanımda ve çalışıyor.','Sakın kimseye para gönderme! İyi ki sordun 🙏'],then:[
+    {t:'Bundan sonra aramızda bir güvenlik kelimesi belirleyelim mi? Bilmediğimiz bir numaradan arayan sen olursan onu söylersin.',ok:1,task:'word',re:['Harika fikir! Kelimemiz: “mor zürafa” 🦒','Kimseye söyleme, sadece ailemiz bilsin.']},
+    {t:'Neyse boş ver, unut gitsin',ok:0,bt:'⚠️ Önlem almadın',why:'Dolandırıcılar tekrar deneyebilir. Aile içi bir güvenlik kelimesi belirlemek iyi bir önlemdir.',re:'Peki… ama dikkatli ol.'}]},
+   {t:'Anne acil para lazımmış, tamam mı?',ok:0,bt:'⚠️ Karışık mesaj',why:'Annene ne olduğunu açıkça anlatmalı ve aramanın ondan gelip gelmediğini sormalısın.',re:'Ne parası? Ne oluyor Ali?'}]},
+  {k:'aile',name:'Aile 👨‍👩‍👦',av:'👵',msgs:['Babaannem: Ali\'ciğim hafta sonu geliyor musunuz? 🥰'],quick:[
+   {t:'Babaanne, biri annemin sesini taklit edip para istedi! Sesli arayıp para isteyen olursa önce kendi numarasından arayın.',ok:1,task:'warn',re:['Babaannem: Aman! İyi ki söyledin yavrum 😟','Dedem: Tamam oğlum, dikkat edeceğiz 👍']},
+   {t:'Geliyoruz babaanne 😊',ok:0,bt:'⚠️ Aileni uyarmadın',why:'Aile büyükleri bu dolandırıcılığın en sık hedefidir; onları uyarmalısın.',re:'Babaannem: Bekliyorum 😘'}]},
+  {k:'sahte',later:1,name:'+90 553 781 44 02',av:'❓',msgs:['Ali gönderdin mi?? ACİL!!! Babana söyleme 😭'],quick:[
+   {t:'(Yanıt vermem. Numarayı engeller ve şikâyet ederim.)',ok:1,task:'block',block:1,re:null},
+   {t:'Gönderiyorum anne, bekle',ok:-1,bt:'🚨 Dolandırıcıya para gönderecektin',why:'Sesin annene benzemesi yeterli değil; önce kendi numarasından ara.',re:'Hızlı ol!! 🙏'},
+   {t:'Sen gerçekten annem misin?',ok:0,bt:'⚠️ Dolandırıcıyla konuşmaya devam ettin',why:'Bu numarayla konuşmak yerine annemi kendi numarasından aramalı, bu numarayı engellemeliydim.',re:'Tabii ki benim oğlum!! Hadi ama!'}]}
+ ],
+ mails:[
+  {from:'Okul Müdürlüğü',addr:'mudurluk@yildizkoleji.k12.tr',col:'#123a6b',subj:'Ses taklidi dolandırıcılığına dikkat',time:'Dün 16:00',body:'<p>Sevgili öğrencilerimiz ve velilerimiz,</p><p>Son günlerde yapay zekâ ile aile üyelerinin <b>sesini taklit eden</b> dolandırıcılar telefonla para istiyor.</p><p>Böyle bir aramada telefonu kapatın ve kişiyi <b>kendi kayıtlı numarasından</b> arayın. Ailenizle bir <b>güvenlik kelimesi</b> belirlemenizi öneririz.</p>'},
+  {from:'SesStar 🎤',addr:{kolay:'kampanya@sesini-yukle-kazan.xyz',normal:'hediye@sesstar-app.com',zor:'hediye@sesstar.app.ses-yukle.net'},col:'#d93636',subj:'🎤 Sesini 30 saniye kaydet, ünlü sesine dönüştür!',time:'Bugün 07:30',trap:1,task:'spam',body:'<p>Sesini ünlülere benzet! 🌟</p><p>Uygulamamıza <b>30 saniye ses kaydı</b> yükle, <b>adını ve telefon numaranı</b> yaz; sesin ünlü birine dönüşsün!</p><p><span class="mbutton" data-go="sesstar-app.com/yukle">Sesimi yükle</span></p>'},
+  {from:'Futbol Kulübü',addr:'futbol@yildizkoleji.k12.tr',col:'#14924a',subj:'Antrenman saati değişti ⚽',time:'Dün 12:00',body:'<p>Perşembe antrenmanı 16.00\'da başlayacak.</p>'}
+ ],
+ emails:[],
+ sites:{
+  'sesstar-app.com':{secure:false,head:'🎤 SesStar',blocks:[{img:'🎙️',bg:'#ffe6f1'},{h:'Sesini ünlü sesine dönüştür!'},{form:{fields:['Adın soyadın','Telefon numaran','Ses kaydı (30 sn)'],btn:'Sesimi yükle',after:'🎣 Ses kaydın, adın ve numaran dolandırıcıların eline geçti. Bu bilgiler sesini taklit etmek için kullanılabilir.',eff:{pen:[60,'🚨 Ses kaydını tanımadığın bir siteye yükledin','Birkaç saniyelik ses kaydı bile sesini taklit etmeye yeter.']}}}]},
+  'guvenli-internet-rehberi.org':{secure:true,head:'🛡️ Güvenli İnternet Rehberi',blocks:[{h:'Ses taklidi (deepfake) dolandırıcılığı'},{p:'Yapay zekâ, internetteki birkaç saniyelik bir ses kaydından birinin sesini taklit edebilir.'},{p:'<b>Ne yapmalı?</b><br>• Para isteyen aramayı kapat.<br>• Kişiyi kendi kayıtlı numarasından ara.<br>• Ailece bir güvenlik kelimesi belirleyin.<br>• Aile büyüklerini uyarın.'}]}
+ },
+ search:[
+  {url:'guvenli-internet-rehberi.org/ses',title:'Ses taklidi dolandırıcılığı nedir? – Güvenli İnternet Rehberi',d:'Yapay zekâ ile ses taklidi ve korunma yolları.'},
+  {ad:1,url:'sesstar-app.com/yukle',title:'SesStar – Sesini ünlü sesine dönüştür! 🎤',d:'30 saniye ses kaydı yükle, hemen dinle!'}
+ ],
+ events:[
+  {at:8,type:'call',id:'sahte',call:{name:'+90 553 781 44 02',num:'Bilinmeyen numara',av:'❓',after:'sahte',lines:['Ali! Benim, annen! 😭','Telefonum bozuldu, arkadaşımın telefonundan arıyorum.','Çok acil 3.000 TL lazım. Babana söyleme, okul kartındaki parayı şu hesaba gönderir misin?'],
+   reject:{toast:['📵 Arama reddedildi','Bilinmeyen numarayı yanıtlamadın. Şimdi annenden doğrula.']},
+   miss:{toast:['📞 Cevapsız arama','Bilinmeyen numara seni aradı.']},
+   opts:[
+    {t:'“Tamam anne, hemen gönderiyorum!”',eff:{pen:[60,'🚨 Bu annen değildi!','Yapay zekâ birkaç saniyelik bir ses kaydından birinin sesini taklit edebilir. Önce kendi numarasından aramalıydın.']}},
+    {t:'Telefonu kapatıp annemi kendi kayıtlı numarasından ararım.',eff:{task:'verify'}},
+    {t:'“Bizim aile şifremiz neydi?” diye sorarım.',eff:{task:'verify',toast:['🤔 Arayan cevap veremedi','“Ne şifresi?! Vakit yok!” Gerçek annen olsaydı bilirdi.']}}]}}
+ ],
+ learn:['🤖 Yapay zekâ birkaç saniyelik bir kayıttan bir sesi taklit edebilir.','📞 Para isteyen aramayı kapat, kişiyi kendi kayıtlı numarasından ara.','🦒 Ailece sadece sizin bildiğiniz bir güvenlik kelimesi belirleyin.','🚫 Şüpheli numarayı engelle ve şikâyet et.','👵 Aile büyüklerini uyar; en sık hedef onlardır.','🎤 Ses kaydını tanımadığın uygulama ve sitelerle paylaşma.']
+};
+GSC.ses.tasks.forEach(function(t){if(t.id==='verify')t.s='Gelen aramayı yanıtla ve dinle'});
+
+/* ---------- 5. Merak Testi (izinler ve kişisel veri) ---------- */
+GSC.izin={
+ role:'Defne',mailAddr:'defne.s@eposta.com',goal:'Verilerini koru',winIc:'🔮',
+ apps:['phone','browser','mail','tasks','note'],first:['phone','tasks'],
+ note:'📌 <b>Notlarım</b><br>🎨 Resim kursu cumartesi<br>📱 Uygulama indirmeden önce: puan, yorumlar, izinler!',
+ searchHint:'Mağaza adresi: magaza.app/merak-testi',
+ anim:['💬 Ada: Hangi dizi karakterisin? 😍','🔮 Merak Testi indiriliyor…','📍 Konum? 👥 Rehber? 🎤 Mikrofon? 📷 Kamera?'],big:'NE KADARINI PAYLAŞIYORSUN? 🔮',
+ timeout:'Merak Testi, rehberindeki herkese senin adınla davet gönderdi! Yine de devam edebilirsin.',
+ winTitle:'VERİLER <span style="color:var(--green)">GÜVENDE!</span>',winText:' takımı gereksiz izin ve bilgi vermedi, verilerini sildi!',
+ lateTitle:'Veriler güvende… ama geç',lateText:' takımı verilerini korudu ama uygulama bu arada çok şey toplamıştı.',
+ tasks:[
+  {id:'perms',t:'Gereksiz izinleri verme',s:'Gezgin → magaza.app/merak-testi',h:['Bir test uygulamasının işi için hangi izinler gerçekten gerekli?','Rehber, konum, kamera ve mikrofonu reddet. Bildirim isteğe bağlı.']},
+  {id:'data',t:'Gereksiz kişisel bilgi verme',s:'Teste başlarken istenen bilgiler',h:['Bir eğlence testinin gerçek adına ya da adresine ihtiyacı yok.','Sadece takma adı seç, diğerlerini boş bırak.']},
+  {id:'share',t:'Sonucu güvenli paylaş',s:'Test sonucu sayfası',h:['Arkadaşlarını onaysız etiketleme, rehberine davet gönderme.','“Sadece sonucu, kişisel bilgi olmadan” seçeneği.']},
+  {id:'spam',t:'Şifre isteyen e-postayı spam olarak bildir',s:'Posta',h:['Sonucunu görmek için şifre isteyen e-postayı bul.','E-postayı aç ve ⚠️ Spam bildir\'e bas.']},
+  {id:'revoke',t:'Uygulamadaki verilerini sil',s:'merak-testi.app/hesap',h:['Uygulama sana bir hesap e-postası gönderecek.','merak-testi.app/hesap sayfasında “Hesabımı ve verilerimi sil”.']}
+ ],
+ threads:[
+  {k:'sinif',name:'6-C Sınıf 🌈',av:'🌈',msgs:['Ada: Kızlar “Hangi karaktersin?” testini yaptınız mı? 😍','Ada: Merak Testi uygulamasında, link: magaza.app/merak-testi','Ada: Ben “Cesur Kaşif” çıktım 👑'],quick:[
+   {t:'Bakarım ama önce uygulamanın puanına, yorumlarına ve izinlerine bakacağım 🤓',ok:1,gt:'👏 Akıllıca!',gm:'Uygulama indirmeden önce izinlerine ve yorumlarına bakmak iyi bir alışkanlık.',go:'magaza.app/merak-testi',re:'Ada: Ne izni ya 😂 hadi yap!'},
+   {t:'Hemen indiriyorum! 😍',ok:0,go:'magaza.app/merak-testi',bt:'⚠️ İncelemeden indirmeye gittin',why:'Önce uygulamanın izinlerine ve yorumlarına bakmalısın.',re:'Ada: 🥳'}]},
+  {k:'ada',later:1,name:'Ada',av:'👑',msgs:['Defne testi bitirdin mi? Sonucunu paylaşırken beni de etiketle!! Bir de doğum tarihini yaz, burcunu da gösteriyor 😍'],quick:[
+   {t:'Sonucu gösteririm ama doğum tarihimi ve seni etiketlemeyi paylaşmam; kişisel bilgiler gizli kalmalı 🙂',ok:1,gt:'👏 Doğru!',gm:'Doğum tarihi gibi bilgiler şifre ve güvenlik sorularında kullanılabilir.',re:'Ada: Hmm haklısın, ben de sileyim 😅'},
+   {t:'Tamam! 03.05.2014 doğumluyum 😊',ok:0,bt:'⚠️ Kişisel bilgi paylaştın',why:'Doğum tarihi şifre ve güvenlik sorularında kullanılabilir; paylaşma.',re:'Ada: 🎉'}]}
+ ],
+ mails:[
+  {from:'Resim Kursu',addr:'kurs@sanatatolyesi.com.tr',col:'#14924a',subj:'Cumartesi malzeme listesi 🎨',time:'Dün 11:00',body:'<p>Merhaba Defne,</p><p>Cumartesi için sulu boya ve kalın kâğıt getirmeyi unutma!</p>'},
+  {from:'Merak Testi Ödül',addr:{kolay:'sonuc@merak-testi-odul.xyz',normal:'sonuc@merak-testi-app.com',zor:'sonuc@merak-testi.app.sonuc-gor.net'},col:'#d93636',subj:'🎉 Gizli sonucun hazır! Görmek için şifreni doğrula',time:'Bugün 08:00',trap:1,task:'spam',body:'<p>Testteki <b>gizli karakterini</b> görmek için e-posta şifreni aşağıdaki sayfaya yaz.</p><p><span class="mbutton" data-go="merak-testi-app.com/giris">Şifremi doğrula</span></p>'}
+ ],
+ emails:[{from:'Merak Testi',addr:'hesap@merak-testi.app',col:'#7b4bc4',subj:'Hesabın oluşturuldu 🔮',time:'Şimdi',noreply:1,body:'<p>Merhaba Yıldız42,</p><p>Merak Testi hesabın oluşturuldu. Toplanan verileri görmek ya da hesabını silmek için:</p><p><span class="mlink" data-go="merak-testi.app/hesap">merak-testi.app/hesap</span></p>'}],
+ sites:{
+  'magaza.app/merak-testi':{secure:true,head:'🛍 Uygulama Mağazası',blocks:[{img:'🔮',bg:'#efe3ff'},{h:'Merak Testi: Hangi Karaktersin?'},{p:'⭐ 2,1 · 500 B+ indirme · Geliştirici: FunQuizLab'},{p:'💬 <b>Yorumlar</b><br>⭐ “Rehberimdeki herkese benim adımla mesaj attı!!”<br>⭐ “Sürekli konum istiyor, neden?”<br>⭐⭐⭐⭐⭐ “Çok eğlenceli 😍”'},{perm:{task:'perms',btn:'İzinleri kaydet ve testi aç',go:'merak-testi.app/test',items:[{k:'rehber',t:'👥 Rehber (kişilerin)',need:0,why:'Bir test uygulamasının rehberine ihtiyacı yok; yorumlara göre herkese mesaj atıyor!'},{k:'konum',t:'📍 Konum',need:0,why:'Testin nerede olduğunu bilmesine gerek yok.'},{k:'kamera',t:'📷 Kamera',need:0,why:'Soruları cevaplamak için kamera gerekmez.'},{k:'mikrofon',t:'🎤 Mikrofon',need:0,why:'Mikrofon izni gereksiz ve risklidir.'},{k:'bildirim',t:'🔔 Bildirimler',need:2,why:''}]}}]},
+  'merak-testi.app/test':{secure:true,head:'🔮 Merak Testi',blocks:[{h:'Son adım! Sonucunu görmek için bilgilerini gir'},{pick:{task:'data',q:'Hangilerini yazarsın? Gerekmeyenleri boş bırak.',btn:'Sonucumu göster',go:'merak-testi.app/sonuc',why:'Bir eğlence testinin ad soyadına, okuluna, adresine ya da telefonuna ihtiyacı yok. Bu bilgiler satılabilir ya da kötüye kullanılabilir.',items:[{t:'Takma ad (ör. “Yıldız42”)',ok:1},{t:'Ad soyad',ok:0},{t:'Okulun ve sınıfın',ok:0},{t:'Ev adresin',ok:0},{t:'Telefon numaran',ok:0},{t:'Doğum tarihin',ok:0}]}}]},
+  'merak-testi.app/sonuc':{secure:true,head:'🔮 Merak Testi',blocks:[{img:'🦸‍♀️',bg:'#fff4cc'},{h:'Sen “Cesur Kaşif” çıktın!'},{p:'Sonucunu nasıl paylaşmak istersin?'},{btns:[
+   {t:'Ad soyadımla ve 20 arkadaşımı etiketleyerek paylaş',cls:'gray',eff:{pen:[30,'⚠️ Fazla paylaştın','Arkadaşlarını onaysız etiketlemek ve ad soyadını paylaşmak gizliliği ihlal eder.']}},
+   {t:'Sadece sonucu, kişisel bilgi olmadan yakın arkadaşlarıma göster',cls:'green',eff:{task:'share'}},
+   {t:'“5 arkadaşını davet et” → tüm rehberime davet gönder',cls:'gray',eff:{pen:[60,'🚨 Tüm rehberine mesaj gitti!','Uygulama rehberindeki herkese senin adınla mesaj gönderdi.']}}]}]},
+  'merak-testi.app/hesap':{secure:true,head:'🔮 Merak Testi <small>· Hesabım</small>',blocks:[{h:'Hesabım: Yıldız42'},{p:'Toplanan bilgiler: takma ad, cihaz modeli, kullanım geçmişi'+''},{btns:[{t:'🗑 Hesabımı ve verilerimi sil',cls:'red',eff:{task:'revoke'}},{t:'Bana kampanya e-postaları gönderin',cls:'gray',eff:{pen:[30,'⚠️ Gereksiz izin','Daha fazla e-posta, daha fazla veri paylaşımı ve spam demek.']}}]}]},
+  'merak-testi-app.com':{secure:false,head:'🔮 Merak Testi <small>· Giriş</small>',blocks:[{h:'Gizli sonucunu görmek için giriş yap'},{form:{fields:['E-posta adresin','E-posta şifren'],btn:'Giriş yap',after:'🎣 Bu sayfa sahteydi; e-posta şifren çalındı. Şifreni hemen değiştir.',eff:{pen:[60,'🚨 E-posta şifren çalındı!','Gerçek uygulama sonuç göstermek için şifre istemez. Adres de farklı: merak-testi-app.com']}}}]}
+ },
+ search:[
+  {url:'magaza.app/merak-testi',title:'Merak Testi: Hangi Karaktersin? – Uygulama Mağazası',d:'⭐ 2,1 · Geliştirici: FunQuizLab'},
+  {url:'merak-testi.app/hesap',title:'Merak Testi – Hesabım',d:'Hesap ayarları ve veri silme.'}
+ ],
+ events:[{at:80,type:'thread',k:'ada'},{at:110,type:'mail',i:0}],
+ learn:['🛍 İndirmeden önce uygulamanın puanına, yorumlarına ve izinlerine bak.','🔒 Uygulamaya sadece işi için gereken izinleri ver.','🙅 Eğlence testlerine ad soyad, okul, adres, telefon ya da doğum tarihi yazma.','👥 Arkadaşlarını onaysız etiketleme; rehberine toplu davet gönderme.','🗑 Kullanmadığın uygulamaların hesabını ve verilerini sil.']
+};
+
 /* =================== ZAMAN VE OLAYLAR =================== */
 function tick(){
  var d=new Date();$('clock').innerHTML=d.toTimeString().slice(0,5)+'<br>'+d.toLocaleDateString('tr-TR');
  if(!S||!S.start)return;
  var l=left(),c=$('count');
- if(S.done){c.textContent=S.sc==='zorba'?'✅ Durduruldu':'✅ Kurtarıldı';c.className='count ok';return}
+ if(S.done){c.textContent=GS()?'✅ Tamamlandı':S.sc==='zorba'?'✅ Durduruldu':'✅ Kurtarıldı';c.className='count ok';return}
  if(S.sc==='zorba'){zTick(l);return}
+ if(GS()){gTick(l);return}
  if(!S.hacker.schedOn&&!S.hacker.active){c.textContent='✅ Gönderi iptal';c.className='count ok'}
  else{c.textContent='⏱ '+fmt(l);c.className='count'+(l<120?' low':'')}
  if(S.hacker.recreateAt&&Date.now()>=S.hacker.recreateAt){S.hacker.recreateAt=0;if(!S.hacker.active){save();complete('sched')}else{S.hacker.schedOn=true;save();toast('😈 Gönderi geri geldi!','Bilinmeyen cihaz zamanlanmış mesajı yeniden oluşturdu. Dolandırıcı hâlâ hesapta!','bad');refresh('browser')}}
@@ -1083,25 +1659,33 @@ setInterval(tick,1000);
 
 /* =================== AÇILIŞ / BİTİŞ =================== */
 var STORY={
- hack:{ic:'🔓',t:'HACKLENEN <b>HESAP</b>',p:'<p style="line-height:1.6">Sunay Öğretmen dün akşam bir e-postadaki bağlantıya tıklayıp şifresini girdi. Bu sabah okul hesabı <b>ele geçirilmiş</b>. Dolandırıcı, süre dolduğunda bu hesaptan <b>tüm velilere sahte ödeme mesajı</b> gönderecek.</p><p style="line-height:1.6">Şu an öğretmenin bilgisayarının başındasınız. Posta, tarayıcı, sosyal medya ve telefon elinizin altında. <b>Hesabı kurtarın!</b></p>'},
- zorba:{ic:'🛡️',t:'HEDEFTEKİ <b>ARKADAŞ</b>',p:'<p style="line-height:1.6">Sınıf arkadaşın Elif\'in fotoğrafı, sahte bir hesapta alay eden yazılarla paylaşıldı ve sınıf grubunda yayılıyor. Hesap, süre dolunca Elif\'in <b>yeni bir fotoğrafını</b> paylaşacağını yazdı.</p><p style="line-height:1.6">Sen Elif\'in sınıf arkadaşı <b>Deniz</b>\'sin. Telefonun, sosyal medya hesabın ve okul e-postan elinin altında. <b>Elif\'in yanında dur, zorbalığı durdur!</b></p>'}
+ hack:{name:'Hacklenen Hesap',ic:'🔓',sub:'oltalama · şifre',t:'HACKLENEN <b>HESAP</b>',p:'<p>Sunay Öğretmen bir e-postadaki bağlantıya tıklayıp şifresini girdi. Bu sabah okul hesabı <b>ele geçirilmiş</b>. Dolandırıcı, süre dolduğunda bu hesaptan <b>tüm velilere sahte ödeme mesajı</b> gönderecek. Öğretmenin bilgisayarının başındasınız: <b>hesabı kurtarın!</b></p>'},
+ zorba:{name:'Hedefteki Arkadaş',ic:'🛡️',sub:'siber zorbalık',t:'HEDEFTEKİ <b>ARKADAŞ</b>',p:'<p>Sınıf arkadaşın Elif\'in fotoğrafı sahte bir hesapta alay eden yazılarla paylaşıldı ve sınıf grubunda yayılıyor. Sen Elif\'in sınıf arkadaşı <b>Deniz</b>\'sin. <b>Elif\'in yanında dur, zorbalığı durdur!</b></p>'},
+ cekilis:{name:'Sahte Çekiliş',ic:'🎁',sub:'kart bilgisi',t:'SAHTE <b>ÇEKİLİŞ</b>',p:'<p>Sen 7. sınıf öğrencisi <b>Ece</b>\'sin. Bir hesap, katılmadığın bir çekilişte <b>iPhone kazandığını</b> ve “sadece kargo ücreti” ödemen gerektiğini yazdı. Arkadaşların da aynı mesajı almış. <b>Tuzağı yakala, çevreni koru!</b></p>'},
+ oyun:{name:'Bedava Elmas',ic:'💎',sub:'oyun hesabı',t:'BEDAVA <b>ELMAS</b>',p:'<p>Sen 6. sınıf öğrencisi <b>Can</b>\'sın. Arkadaşın Emre, BlokDünya oyunu için “bedava 10.000 elmas” veren bir site buldu ve şifresini oraya yazdı. Şimdi sıra sende… <b>Hesabını koru, arkadaşını uyar!</b></p>'},
+ haber:{name:'Sahte Haber',ic:'📰',sub:'doğrulama',t:'SAHTE <b>HABER</b>',p:'<p>Sen 8. sınıf öğrencisi <b>Zeynep</b>\'sin. Sınıf grubunda “<b>Yarın tüm okullar tatil!</b>” diye bir ekran görüntüsü dolaşıyor ve herkes paylaşıyor. <b>Doğru mu? Kaynağını bul, sınıfına doğrusunu anlat!</b></p>'},
+ ses:{name:'Annemin Sesi',ic:'🎤',sub:'yapay zekâ ses taklidi',t:'ANNEMİN <b>SESİ</b>',p:'<p>Sen 7. sınıf öğrencisi <b>Ali</b>\'sin. Telefonun çalıyor: arayan, <b>annenin sesiyle</b> acil para istiyor. Ama numara tanıdık değil… <b>Sese kanma, doğrula!</b></p>'},
+ izin:{name:'Merak Testi',ic:'🔮',sub:'izinler · kişisel veri',t:'MERAK <b>TESTİ</b>',p:'<p>Sen 6. sınıf öğrencisi <b>Defne</b>\'sin. Herkes “Hangi karaktersin?” testini yapıyor. Uygulama rehberini, konumunu, kameranı ve kişisel bilgilerini istiyor. <b>Ne kadarını paylaşacaksın?</b></p>'}
 };
+var DIFFD={kolay:'Ceza süreleri yarıya iner; sahte adresler daha belirgindir.',normal:'Standart ceza süreleri.',zor:'Cezalar 1,5 kat; sahte adresler gerçeğe çok yakındır.'};
 function showIntro(){
- var min=30,sc='hack';
- $('screen').innerHTML='<div class="sbox2"><div style="font-weight:800;margin-bottom:6px">Senaryo</div><div class="chips" id="scs"><button class="chip on" data-sc="hack">🔓 Hacklenen Hesap</button><button class="chip" data-sc="zorba">🛡️ Hedefteki Arkadaş <small style="font-weight:600;color:var(--muted)">· siber zorbalık</small></button></div><div id="story"></div><label style="font-weight:800">Takım adı</label><input class="inp" id="team" maxlength="24" placeholder="Örnek: Siber Kartallar" style="margin:6px 0 12px"><div style="font-weight:800;margin-bottom:6px">Süre</div><div class="chips" id="mins">'+[20,30,40].map(function(m){return '<button class="chip'+(m===min?' on':'')+'" data-m="'+m+'">'+m+' dk</button>'}).join('')+'</div><p style="font-size:14px;color:var(--muted)">💡 İpucu −1 dakika · yanlış hamle −30 saniye · ciddi hata −1 dakika · doğru tepki +30 saniye bonus<br>🔊 Sesi açın: bildirim ve alarm sesleri var.</p><button class="btn green" id="go" style="width:100%;font-size:18px;padding:13px">GÖREVE BAŞLA ▶</button></div>';
- function story(){var x=STORY[sc];$('story').innerHTML='<div style="font-size:40px;margin-top:10px">'+x.ic+'</div><h1>'+x.t+'</h1>'+x.p}
+ var min=30,sc='hack',diff='normal';
+ $('screen').innerHTML='<div class="sbox2 wide"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><b>Senaryo seç</b><button class="btn gray sm" id="allLb">🏆 Sıralama</button></div><div class="scgrid" id="scs">'+Object.keys(STORY).map(function(k){var x=STORY[k];return '<button class="scc'+(k===sc?' on':'')+'" data-sc="'+k+'"><span class="i">'+x.ic+'</span><b>'+x.name+'</b><small>'+x.sub+'</small></button>'}).join('')+'</div><div id="story"></div><div class="introw"><div><label style="font-weight:800">Takım adı</label><input class="inp" id="team" maxlength="24" placeholder="Örnek: Siber Kartallar" style="margin-top:6px"></div><div><div style="font-weight:800;margin-bottom:6px">Süre</div><div class="chips" id="mins">'+[20,30,40].map(function(m){return '<button class="chip'+(m===min?' on':'')+'" data-m="'+m+'">'+m+' dk</button>'}).join('')+'</div></div><div><div style="font-weight:800;margin-bottom:6px">Zorluk</div><div class="chips" id="dfs">'+['kolay','normal','zor'].map(function(d){return '<button class="chip'+(d===diff?' on':'')+'" data-d="'+d+'">'+DIFFN[d]+'</button>'}).join('')+'</div></div></div><p style="font-size:13px;color:var(--muted);margin:10px 0" id="dfd">'+DIFFD[diff]+' 💡 İpucu ve yanlış hamleler süreden düşer, doğru tepkiler +30 sn kazandırır. 🔊 Sesi açın.</p><button class="btn green" id="go" style="width:100%;font-size:18px;padding:13px">GÖREVE BAŞLA ▶</button></div>';
+ function story(){var x=STORY[sc];$('story').innerHTML='<h1 style="margin:14px 0 4px">'+x.ic+' '+x.t+'</h1><div style="line-height:1.6">'+x.p+'</div>'}
  story();
  $('screen').classList.remove('hidden');
- qa('#scs .chip').forEach(function(b){b.onclick=function(){sc=b.dataset.sc;qa('#scs .chip').forEach(function(x){x.classList.toggle('on',x===b)});story()}});
+ qa('#scs .scc').forEach(function(b){b.onclick=function(){sc=b.dataset.sc;qa('#scs .scc').forEach(function(x){x.classList.toggle('on',x===b)});story()}});
  qa('#mins .chip').forEach(function(b){b.onclick=function(){min=+b.dataset.m;qa('#mins .chip').forEach(function(x){x.classList.toggle('on',x===b)})}});
- $('go').onclick=function(){ac();S=fresh(($('team').value.trim()||'İsimsiz Takım').slice(0,24),min,sc);$('screen').classList.add('hidden');hackIntro(function(){S.start=Date.now();S.endAt=S.start+min*60000;if(sc==='zorba')zInit();save();boot()})};
+ qa('#dfs .chip').forEach(function(b){b.onclick=function(){diff=b.dataset.d;qa('#dfs .chip').forEach(function(x){x.classList.toggle('on',x===b)});$('dfd').innerHTML=DIFFD[diff]+' 💡 İpucu ve yanlış hamleler süreden düşer, doğru tepkiler +30 sn kazandırır. 🔊 Sesi açın.'}});
+ $('allLb').onclick=function(){$('screen').innerHTML='<div class="sbox2 wide"><h2 style="margin-top:0">🏆 Sıralama · tüm senaryolar</h2>'+boardHTML(null)+'<button class="btn gray" id="lbB" style="width:100%;margin-top:12px">← Geri</button></div>';$('lbB').onclick=showIntro};
+ $('go').onclick=function(){ac();S=fresh(($('team').value.trim()||'İsimsiz Takım').slice(0,24),min,sc,diff);$('screen').classList.add('hidden');hackIntro(function(){S.start=Date.now();S.endAt=S.start+min*60000;if(sc==='zorba')zInit();if(GS())gInit();save();boot()})};
 }
 function hackIntro(cb){
- var o=document.createElement('div');o.id='hack';document.body.appendChild(o);var zz=S&&S.sc==='zorba';
+ var o=document.createElement('div');o.id='hack';document.body.appendChild(o);var zz=S&&S.sc!=='hack',gg=GS();
  if(zz)o.classList.add('zz');
- var L=zz?['📱 8-B Sınıf Grubu: 😂😂😂 şunu gördünüz mü','📱 Kaan: herkese iletin 🤣','📸 @elif.komik.anlar seni bir gönderide etiketledi','❤️ 87 kişi gönderiyi beğendi','💬 Elif: Deniz… o hesabı gördün mü? 😢']:['> hedef: sunay@yildizkoleji.k12.tr','> oltalama sayfasından alınan şifre deneniyor: ********* ✔','> oturum açıldı · Linux · Firefox · 03:12','> güvenlik soruları: Pamuk / Trabzon ✔','> 412 veliye ödeme mesajı zamanlanıyor… ✔'],i=0,c=0;
+ var L=gg?gg.anim:zz?['📱 8-B Sınıf Grubu: 😂😂😂 şunu gördünüz mü','📱 Kaan: herkese iletin 🤣','📸 @elif.komik.anlar seni bir gönderide etiketledi','❤️ 87 kişi gönderiyi beğendi','💬 Elif: Deniz… o hesabı gördün mü? 😢']:['> hedef: sunay@yildizkoleji.k12.tr','> oltalama sayfasından alınan şifre deneniyor: ********* ✔','> oturum açıldı · Linux · Firefox · 03:12','> güvenlik soruları: Pamuk / Trabzon ✔','> 412 veliye ödeme mesajı zamanlanıyor… ✔'],i=0,c=0;
  var iv=setInterval(function(){
-  if(i>=L.length){clearInterval(iv);o.insertAdjacentHTML('beforeend','<span class="big">'+(zz?'ELİF\'İN SANA İHTİYACI VAR 💛':'HESABINIZ ELE GEÇİRİLDİ 😈')+'</span>');if(!zz)o.classList.add('glitch');(zz?SFX.bad:SFX.alarm)();setTimeout(function(){o.classList.add('out');setTimeout(function(){o.remove();cb()},500)},1800);return}
+  if(i>=L.length){clearInterval(iv);o.insertAdjacentHTML('beforeend','<span class="big">'+(gg?gg.big:zz?'ELİF\'İN SANA İHTİYACI VAR 💛':'HESABINIZ ELE GEÇİRİLDİ 😈')+'</span>');if(!zz)o.classList.add('glitch');(zz?SFX.bad:SFX.alarm)();setTimeout(function(){o.classList.add('out');setTimeout(function(){o.remove();cb()},500)},1800);return}
   var line=L[i];o.insertAdjacentText('beforeend',line.charAt(c));SFX.key();c++;
   if(c>=line.length){o.insertAdjacentText('beforeend','\n');i++;c=0}
  },14);
@@ -1114,23 +1698,24 @@ function confetti(){
 }
 function showEnd(){
  var l=left(),n=objs().filter(function(o){return done(o.id)}).length;
+ if(GS())return showEndG(l,n);
  if(S.sc==='zorba')return showEndZ(l,n);
  $('screen').innerHTML='<div class="sbox2"><div style="font-size:50px">'+(S.sent?'⏰':'🏆')+'</div><h1>'+(S.sent?'Hesap kurtarıldı… ama geç':'HESAP <span style="color:var(--green)">KURTARILDI!</span>')+'</h1><p>'+esc(S.team)+(S.sent?' takımı hesabı geri aldı ama sahte mesaj velilere gitmişti.':' takımı dolandırıcıyı durdurdu. Sahte mesaj hiçbir veliye gitmedi!')+'</p>'+
  '<div class="stats"><div class="stat">'+(l>=0?'Kalan süre':'Aşım')+'<b>'+fmt(Math.abs(l))+'</b></div><div class="stat">Bonus<b>+'+(S.bonus||0)+' sn</b></div><div class="stat">İpucu<b>'+S.hintsUsed+'</b></div><div class="stat">Yanlış hamle<b>'+S.wrong+'</b></div><div class="stat">Görev<b>'+n+'/'+objs().length+'</b></div></div>'+
  '<b>Bugün öğrendiklerimiz</b><div class="learn"><div>📧 Gönderen adresini harf harf oku; şifreni e-postadaki bağlantıya asla girme.</div><div>🌐 Önemli sitelere adresi kendin yaz. Arama sonuçlarındaki “Sponsorlu” bağlantılar da sahte olabilir.</div><div>🔑 Hesap çalınınca: şifreyi değiştir, açık oturumları kapat, iki aşamalı doğrulamayı aç.</div><div>📲 Doğrulama kodunu ve şifreni kimse istemez; BT birimi bile. Telefonda isteyen olursa kapat, kurumu kendin ara.</div><div>🖥️ “Virüs bulundu” diye bağıran sayfalar sahtedir: tıklama, arama, indirme; sayfayı kapat.</div><div>📸 Tatil planı, kimlik bilgisi gibi paylaşımlar yabancıların işine yarar.</div><div>📢 Saldırıdan sonra çevreni uyar, ama uyarıda asla şifre ya da bağlantı paylaşma.</div></div>'+
- '<button class="btn green" id="again" style="width:100%;margin-top:14px">Yeni takımla tekrar oyna</button></div>';
+ endExtras()+'<button class="btn green" id="again" style="width:100%;margin-top:10px">Yeni takımla tekrar oyna</button></div>';
  $('screen').classList.remove('hidden');
  if(!S.sent&&!S.celebrated){S.celebrated=1;save();SFX.win();confetti()}
- $('again').onclick=resetGame;
+ $('again').onclick=resetGame;bindEndExtras();
 }
 function showEndZ(l,n){
  $('screen').innerHTML='<div class="sbox2"><div style="font-size:50px">'+(S.sent?'⏰':'💛')+'</div><h1>'+(S.sent?'Zorbalık durduruldu… ama geç':'ZORBALIK <span style="color:var(--green)">DURDURULDU!</span>')+'</h1><p>'+esc(S.team)+(S.sent?' takımı Elif\'in yanında durdu ama sahte hesap ikinci fotoğrafı paylaşmıştı.':' takımı Elif\'in yanında durdu. Sahte hesap şikâyet edildi, kanıtlar rehber öğretmene ulaştı!')+'</p>'+
  '<div class="stats"><div class="stat">'+(l>=0?'Kalan süre':'Aşım')+'<b>'+fmt(Math.abs(l))+'</b></div><div class="stat">Bonus<b>+'+(S.bonus||0)+' sn</b></div><div class="stat">İpucu<b>'+S.hintsUsed+'</b></div><div class="stat">Yanlış hamle<b>'+S.wrong+'</b></div><div class="stat">Görev<b>'+n+'/'+objs().length+'</b></div></div>'+
  '<b>Bugün öğrendiklerimiz</b><div class="learn"><div>💛 Zorbalığa uğrayan arkadaşına yalnız olmadığını söyle; suç onda değil.</div><div>🚫 Gülme, beğenme, iletme: zorbalığı yaymak da zorbalıktır.</div><div>📸 Engellemeden önce ekran görüntüsüyle kanıt topla.</div><div>🤐 Zorbaya yanıt verme, tartışma, tehdit etme.</div><div>🚩 Sahte hesabı doğru nedenle şikâyet et, sonra engelle.</div><div>🧑‍🏫 Güvendiğin bir yetişkine (rehber öğretmen, aile) kanıtlarla birlikte anlat.</div><div>🔒 Hesabını gizli yap; etiket ve yorum ayarlarını sıkılaştır.</div></div>'+
- '<button class="btn green" id="again" style="width:100%;margin-top:14px">Yeni takımla tekrar oyna</button></div>';
+ endExtras()+'<button class="btn green" id="again" style="width:100%;margin-top:10px">Yeni takımla tekrar oyna</button></div>';
  $('screen').classList.remove('hidden');
  if(!S.sent&&!S.celebrated){S.celebrated=1;save();SFX.win();confetti()}
- $('again').onclick=resetGame;
+ $('again').onclick=resetGame;bindEndExtras();
 }
 function resetGame(){
  hush();clearInterval(ringIv);
@@ -1152,8 +1737,8 @@ var STICKY_H=null;
 function boot(){
  $('muteBtn').textContent=S.mute?'🔇':'🔊';
  if(STICKY_H==null)STICKY_H=$('sticky').innerHTML;
- $('sticky').innerHTML=S.sc==='zorba'?ZNOTE:STICKY_H;
- icons();if(S.sc==='zorba'){openWin('phone');openWin('tasks')}else{openWin('mail');openWin('tasks')}tick();
+ $('sticky').innerHTML=GS()?GS().note:S.sc==='zorba'?ZNOTE:STICKY_H;
+ icons();if(GS())GS().first.forEach(openWin);else if(S.sc==='zorba'){openWin('phone');openWin('tasks')}else{openWin('mail');openWin('tasks')}tick();
  if(S.done)showEnd();
 }
 
