@@ -1,7 +1,16 @@
 <!doctype html>
+<!--
+  Hacklenen Hesap — dijital güvenlik kaçış oyunu
+  © 2026 Sunay Polat (github.com/polatsunay) · Tüm hakları saklıdır.
+  Bu oyunun kodu, metinleri, soruları ve görselleri izinsiz kopyalanamaz, değiştirilemez,
+  başka bir yerde yayınlanamaz ya da satılamaz. Ayrıntılar: LICENSE dosyası.
+-->
 <html lang="tr">
 <head>
 <meta charset="utf-8">
+<meta name="author" content="Sunay Polat">
+<meta name="copyright" content="© 2026 Sunay Polat. Tüm hakları saklıdır.">
+
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Hacklenen Hesap</title>
 <style>
@@ -1673,7 +1682,7 @@ var STORY={
 var DIFFD={kolay:'Ceza süreleri yarıya iner; sahte adresler daha belirgindir.',normal:'Standart ceza süreleri.',zor:'Cezalar 1,5 kat; sahte adresler gerçeğe çok yakındır.'};
 function showIntro(){
  var min=30,sc='hack',diff='normal';
- $('screen').innerHTML='<div class="sbox2 wide"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><b>Senaryo seç</b><button class="btn gray sm" id="allLb">🏆 Sıralama</button></div><div class="scgrid" id="scs">'+Object.keys(STORY).map(function(k){var x=STORY[k];return '<button class="scc'+(k===sc?' on':'')+'" data-sc="'+k+'"><span class="i">'+x.ic+'</span><b>'+x.name+'</b><small>'+x.sub+'</small></button>'}).join('')+'</div><div id="story"></div><div class="introw"><div><label style="font-weight:800">Takım adı</label><input class="inp" id="team" maxlength="24" placeholder="Örnek: Siber Kartallar" style="margin-top:6px"></div><div><div style="font-weight:800;margin-bottom:6px">Süre</div><div class="chips" id="mins">'+[20,30,40].map(function(m){return '<button class="chip'+(m===min?' on':'')+'" data-m="'+m+'">'+m+' dk</button>'}).join('')+'</div></div><div><div style="font-weight:800;margin-bottom:6px">Zorluk</div><div class="chips" id="dfs">'+['kolay','normal','zor'].map(function(d){return '<button class="chip'+(d===diff?' on':'')+'" data-d="'+d+'">'+DIFFN[d]+'</button>'}).join('')+'</div></div></div><p style="font-size:13px;color:var(--muted);margin:10px 0" id="dfd">'+DIFFD[diff]+' 💡 İpucu ve yanlış hamleler süreden düşer, doğru tepkiler +30 sn kazandırır. 🔊 Sesi açın.</p><button class="btn green" id="go" style="width:100%;font-size:18px;padding:13px">GÖREVE BAŞLA ▶</button></div>';
+ $('screen').innerHTML='<div class="sbox2 wide"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><b>Senaryo seç</b><button class="btn gray sm" id="allLb">🏆 Sıralama</button></div><div class="scgrid" id="scs">'+Object.keys(STORY).map(function(k){var x=STORY[k];return '<button class="scc'+(k===sc?' on':'')+'" data-sc="'+k+'"><span class="i">'+x.ic+'</span><b>'+x.name+'</b><small>'+x.sub+'</small></button>'}).join('')+'</div><div id="story"></div><div class="introw"><div><label style="font-weight:800">Takım adı</label><input class="inp" id="team" maxlength="24" placeholder="Örnek: Siber Kartallar" style="margin-top:6px"></div><div><div style="font-weight:800;margin-bottom:6px">Süre</div><div class="chips" id="mins">'+[20,30,40].map(function(m){return '<button class="chip'+(m===min?' on':'')+'" data-m="'+m+'">'+m+' dk</button>'}).join('')+'</div></div><div><div style="font-weight:800;margin-bottom:6px">Zorluk</div><div class="chips" id="dfs">'+['kolay','normal','zor'].map(function(d){return '<button class="chip'+(d===diff?' on':'')+'" data-d="'+d+'">'+DIFFN[d]+'</button>'}).join('')+'</div></div></div><p style="font-size:13px;color:var(--muted);margin:10px 0" id="dfd">'+DIFFD[diff]+' 💡 İpucu ve yanlış hamleler süreden düşer, doğru tepkiler +30 sn kazandırır. 🔊 Sesi açın.</p><button class="btn green" id="go" style="width:100%;font-size:18px;padding:13px">GÖREVE BAŞLA ▶</button><p style="font-size:11px;color:var(--muted);text-align:center;margin:10px 0 0">© 2026 Sunay Polat · Tüm hakları saklıdır</p></div>';
  function story(){var x=STORY[sc];$('story').innerHTML='<h1 style="margin:14px 0 4px">'+x.ic+' '+x.t+'</h1><div style="line-height:1.6">'+x.p+'</div>'}
  story();
  $('screen').classList.remove('hidden');
